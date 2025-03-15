@@ -1,0 +1,104 @@
+
+% Basic template for homeworks
+% derived from miktex's article template
+% Roger Fowler
+% 30 September 2024
+
+\documentclass[10pt]{article} % set font size
+\usepackage[utf8]{inputenc} % set input encoding (not needed with XeLaTeX)
+
+\usepackage{geometry} % to change the page dimensions
+\geometry{a4paper}
+
+\usepackage{graphicx} % support the \includegraphics command and options
+\usepackage{booktabs} % for much better looking tables
+\usepackage{array} % for better arrays (eg matrices) in maths
+\usepackage{paralist} % very flexible & customisable lists (eg. enumerate/itemize, etc.)
+\usepackage{verbatim} % adds environment for commenting out blocks of text & for better verbatim
+\usepackage{subfig} % make it possible to include more than one captioned figure/table in a single float
+\usepackage{mathtools} % get split environment
+\usepackage{amsmath}
+\usepackage{cancel} % get /cancel command
+\usepackage{tikz} % for drawing geometry
+\usepackage{tkz-euclide} % specifically for calculating intersections
+\usepackage{amssymb} % get \triangleq
+\usepackage{matlab-prettifier} % for including matlab code in a \begin{lstlisting}[style=Matlab-editor] block
+
+\usepackage{fancyhdr} % headers and footers
+\pagestyle{plain} % options: empty , plain , fancy
+
+\usepackage{sectsty} % section titles
+\renewcommand\thesection{\arabic{section}} % sections are numbered
+\renewcommand\thesubsection{\thesection)\alph{subsection}} % subsections are lettered
+% options are:
+%    \arabic (1, 2, 3, ...)
+%    \alph (a, b, c, ...)
+%    \Alph (A, B, C, ...)
+%    \roman (i, ii, iii, ...)
+%    \Roman (I, II, III, ...)
+%    \fnsymbol (∗, †, ‡, §, ¶, ...)
+%
+
+%\allsectionsfont{\sffamily\mdseries\upshape} % (See the fntguide.pdf for font help)
+\usepackage{titlesec}
+\titleformat{\section}[hang]
+{\normalfont\bfseries}
+{\thesection}{0.5em}{}
+\titleformat{\subsection}[hang]
+{\normalfont\bfseries}
+{\thesubsection}{0.5em}{}
+\titleformat{\subsubsection}[hang]
+{\normalfont\bfseries}
+{\thesubsubsection}{0.5em}{}
+
+\renewcommand\deg{^\circ} % define degree symbol as \deg
+
+% matrix display commands
+\newcommand{\skewmat}[3]{\begin{bmatrix}0&-#3&#2\\#3&0&-#1\\-#2&#1&0\end{bmatrix}}
+\newcommand{\diagmat}[3]{\begin{bmatrix}#1&0&0\\0&#2&0\\0&0&#3\end{bmatrix}}
+\newcommand{\vecmat}[3]{\begin{bmatrix}#1\\#2\\#3\end{bmatrix}}
+
+% laplace transform commands
+\newcommand{\Lapl}[1]{\mathcal{L}\left\{#1\right\}}
+\newcommand{\invLapl}[1]{\mathcal{L}^{-1}\left\{#1\right\}}
+
+%%% END Article customizations
+
+\title{\vspace{-2cm}CS 5180 Reinforcement Learning and Sequential Decision Making - Project Proposal}
+\author{Roger Fowler}
+\date{February 25 2025}
+
+\begin{document}
+\maketitle
+
+\section{Problem Statement}
+
+Wizard is a trick-taking card game for three to six players. Each hand is composed of a number of tricks. After being dealt hands, players must bet exactly how many tricks they will win during the play of the hand. Rules during play may make cards more or less valuable: a randomly assigned trump suit is the most valuable, followed by the suit led by the first player of that trick. Players also must follow the led suit if possible. Whichever player wins the trick leads the next suit. In addition to the normal 52 card deck, there are also 4 Wizard cards which will beat anything except a previous Wizard, and 4 Jester cards which will not beat anything except a following Jester.
+
+The rules of the game are such that a player only receives points if they win exactly their bet number of tricks; otherwise they lose points. The game has no dealer; only the randomness of the deck and the decisions of the players affect the state. For these reasons, the game is complex enough to justify a machine learning effort beyond a toy problem.
+
+\section{Outcomes}
+
+The desired outcome of the project is to train an agent to play the game Wizard at a capable level. Comparison benchmarks would be useful; a human player for example. An agent which counts cards and plays statistically optimally may also be possible, but ‘optimal’ play is too complex to be achieved with a purely deterministic agent, so this benchmark is unrealistic. The game provides a score for each hand and for the full game that can be used as a reward.
+
+\section{Algorithms and Platforms}
+
+Development will be done in the python gymnasium environment, which provides a standard way for the environment and agents to interact. This problem is inherently multi-agent and adversarial; so training will be done by allowing agents to compete against one another.
+
+Due the very high number of game states ($60!$ from the deck order alone) it is infeasible to explore exhaustively, and the chosen algorithm must learn efficiently. Certain situations can be trained specifically - how to bet, for example, or the situation in which the agent may choose the trump suit - but these are specially important choices.
+
+The objective is to use TD learning for this agent. Learning must be efficient due to the complexity of the game interactions. State values may need to be combined though - the combination of cards in hand, what was bet, how many tricks have been won, what the other players bet, how many they have won, etc. demand that the state space be abstracted. A single value in the state might be how many tricks remain to be won out of how many were bet, for example.
+
+Variations of TD should be sufficient to train a basically capable agent in this space. Different versions of state spaces, Q iterations, reward structures, etc. will be tried out, and the final report will compare the effectiveness of these different techniques.
+
+\section{Schedule}
+
+\begin{itemize}
+\item March 14th: Functional simulation environment implemented (with human interaction)
+\item March 21st: Basic agent implemented
+\item March 28th - April 11th: Agent iteration and fine-tuning
+\item April 18th: Report written
+\end{itemize}
+
+
+\end{document}

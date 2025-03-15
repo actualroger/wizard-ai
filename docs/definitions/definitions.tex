@@ -1,0 +1,119 @@
+
+% Basic template for homeworks
+% derived from miktex's article template
+% Roger Fowler
+% 30 September 2024
+
+\documentclass[10pt]{article} % set font size
+\usepackage[utf8]{inputenc} % set input encoding (not needed with XeLaTeX)
+
+\usepackage{geometry} % to change the page dimensions
+\geometry{a4paper}
+
+\usepackage{graphicx} % support the \includegraphics command and options
+\usepackage{booktabs} % for much better looking tables
+\usepackage{array} % for better arrays (eg matrices) in maths
+\usepackage{paralist} % very flexible & customisable lists (eg. enumerate/itemize, etc.)
+\usepackage{verbatim} % adds environment for commenting out blocks of text & for better verbatim
+\usepackage{subfig} % make it possible to include more than one captioned figure/table in a single float
+\usepackage{mathtools} % get split environment
+\usepackage{amsmath}
+\usepackage{cancel} % get /cancel command
+\usepackage{tikz} % for drawing geometry
+\usepackage{tkz-euclide} % specifically for calculating intersections
+\usepackage{amssymb} % get \triangleq
+\usepackage{matlab-prettifier} % for including matlab code in a \begin{lstlisting}[style=Matlab-editor] block
+
+\usepackage{fancyhdr} % headers and footers
+\pagestyle{plain} % options: empty , plain , fancy
+
+\usepackage{sectsty} % section titles
+\renewcommand\thesection{\arabic{section}} % sections are numbered
+\renewcommand\thesubsection{\thesection)\alph{subsection}} % subsections are lettered
+% options are:
+%    \arabic (1, 2, 3, ...)
+%    \alph (a, b, c, ...)
+%    \Alph (A, B, C, ...)
+%    \roman (i, ii, iii, ...)
+%    \Roman (I, II, III, ...)
+%    \fnsymbol (∗, †, ‡, §, ¶, ...)
+%
+
+%\allsectionsfont{\sffamily\mdseries\upshape} % (See the fntguide.pdf for font help)
+\usepackage{titlesec}
+\titleformat{\section}[hang]
+{\normalfont\bfseries}
+{\thesection}{0.5em}{}
+\titleformat{\subsection}[hang]
+{\normalfont\bfseries}
+{\thesubsection}{0.5em}{}
+\titleformat{\subsubsection}[hang]
+{\normalfont\bfseries}
+{\thesubsubsection}{0.5em}{}
+
+\renewcommand\deg{^\circ} % define degree symbol as \deg
+
+% matrix display commands
+\newcommand{\skewmat}[3]{\begin{bmatrix}0&-#3&#2\\#3&0&-#1\\-#2&#1&0\end{bmatrix}}
+\newcommand{\diagmat}[3]{\begin{bmatrix}#1&0&0\\0&#2&0\\0&0&#3\end{bmatrix}}
+\newcommand{\vecmat}[3]{\begin{bmatrix}#1\\#2\\#3\end{bmatrix}}
+
+% laplace transform commands
+\newcommand{\Lapl}[1]{\mathcal{L}\left\{#1\right\}}
+\newcommand{\invLapl}[1]{\mathcal{L}^{-1}\left\{#1\right\}}
+
+%%% END Article customizations
+
+\title{\vspace{-2cm}CS 5180 - Final Project Notes}
+\author{Roger Fowler}
+\date{MONTH DAY YEAR}
+
+\begin{document}
+\maketitle
+
+\section{State Definitions}
+
+At the beginning of a hand, a player is dealt a number of cards. It then bets a certain number of tricks between 0 and the number of available tricks, inclusive. When a player is presented with a choice of card to play, there are a number of pieces of information they have:
+
+\begin{enumerate}
+\item Cards in their hand
+\item Trump suit
+\item Led suit
+\item Cards which have been played
+\item Who led the hand
+\item Bet amount
+\item Tricks won
+\item Tricks remaining
+\end{enumerate}
+
+Some of these are simply redundant; who led the hand is obvious by the number of cards in the current trick pile, and is important for the unpredictability of later players. The led suit is also obvious because it is the suit of the first card in the trick pile, and is not defined if there is no pile. Tricks remaining is equal to the number of cards in hand.
+
+Bet amount and tricks won can be combined into the number of tricks that must still be won to make the bet. In this case the agent can only decrease this number and will aim for zero. But decreasing it past zero will incur a penalty at scoring time.
+
+A naive treatment of knowledge about specific cards would produce a massive state space. The 60 card deck is distributed among several groups; with some number of known cards in hand, a known card flipped to reveal trump suit, known cards that have been played, and the rest of the unknown cards distributed between the remaining undealt deck and the other players’ hands. In fact, there is additional information here; a player may not know which specific cards are in another player’s hand, but because a player can be forced to play the led suit, if they do not do so implies that they have no cards of that suit.
+
+Ultimately the game allows for much simplification. Suits are fungible, except that one is the trump suit for the hand and one (possibly the same) is the led suit for the trick. Additionally, cards themselves are fungible. If a player has a set of cards in their hand of a single suit, and knows that there are no cards in other players’ hands of the same suit and between the ranks of the set, then they are all functionally the same card because they have the same chance of winning in a particular situation. Once card values have merged in this way they will never unmerge.
+
+TODO
+
+Ultimately, this leads to a representation of the state which is much simplified compared to all of the information the agent actually has. This hidden state is composed of all of the information about exact cards and where they can be. But the agent only needs to know, in the moment, a simplified representation of its hand and how many tricks it must win in the remaining hand.
+
+State transitions become simplified in this representation. A state is composed of a hand of N cards and a goal of T remaining tricks to win. After an action is taken, the rest of the agents take their actions, and the agent arrives at a new state. This state will have exactly N-1 cards, and the agent is in control of which card was removed. However, it is generally not in control of whether T has remained the same or decreased by exactly one.
+
+The 
+
+\section{Action Definitions}
+
+The action space is large, but the permissible actions in any given state are small. However many groups of cards are in an agent’s hand are the number of actions available to it.
+
+\section{Training Procedure}
+
+Hands are independent of one another. The deck is shuffled between hands, so there is no connection in state, and total score is simply a sum of score from each hand. This allows a hand to be played in isolation without having to consider the rest of the game.
+
+Because rewards only occur at the end of a hand, it is reasonable to start training closest to the reward. That is, starting with a hand with a low number of tricks is easier to learn. This also reduces the number of actions an agent can take in each trick, because it has fewer cards in hand. The last tricks of a large hand are similar but not exactly the same as the tricks in a small hand, because the possible number of bet tricks may be very high, and also because the agent has much more knowledge of what has and has not been played. Still, the knowledge should be generalizable, so short hands should be trained before long hands.
+
+Once the agent is able to play for an arbitrary choice of hand and bet, it should be possible to train the agent to choose its own bet as well. These special actions are reserved for only this phase of play. In reality since this stage of play is completely divorced this choice could be handed off to a different specialized agent, except that this agent would need access to the expected rewards of starting each hand with a given bet. Actions are already restricted by play, so it is not a serious complication to have special actions reserved for only this situation. This also does not require any additional state information.
+
+There is one more special state; the dealer turns over the top card of the deck to set the trump suit after dealing the hand. If this card is a Wizard, the dealer is able to choose the trump suit. Again, this creates four actions that only occur in this rare situation. And again, access to the state value function is useful to train this, and no additional state information is necessary, so it can be rolled into the larger agent. Since this choice appears before the choice of bet and before play, it should be trained last. During training this choice should be taken randomly.
+
+\end{document}

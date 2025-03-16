@@ -1,36 +1,19 @@
+
 import numpy as np
 from typing import Optional
 import gymnasium as gym
+from WizardDeck import WizardDeck
 
 class WizardEnvironment(gym.Env):
     def __init__(self, numPlayers: int = 3):
         # number of players
         self.numPlayers = numPlayers
+        
 
-        # define the state space
-        self.state_space = [[r, c] for r, c in zip(np.where(self.grid == 0.0)[0],
-                                                   np.where(self.grid == 0.0)[1])]
-
-        # define the action space
-        self.action_space = {
-            "up": np.array([-1, 0]),
-            "down": np.array([1, 0]),
-            "left": np.array([0, -1]),
-            "right": np.array([0, 1])
-        }
-                        
-        # track the current state, time step, and action
-        self.state = None
-        self.t = None
-        self.act = None
+        # deck
+        self.deck = WizardDeck()
 
     def reset(self, seed: Optional[int] = None, ):
-        # reset the agent to the start state
-        self.state = self.start_state
-        # reset the time step tracker
-        self.t = 0
-        # reset the action tracker
-        self.act = None
         # reset the terminal flag
         terminated = False
         return self.state, terminated

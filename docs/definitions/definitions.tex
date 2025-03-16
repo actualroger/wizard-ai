@@ -62,6 +62,12 @@
 \newcommand{\Lapl}[1]{\mathcal{L}\left\{#1\right\}}
 \newcommand{\invLapl}[1]{\mathcal{L}^{-1}\left\{#1\right\}}
 
+% neural network package
+%\usepackage{neuralnetwork}
+
+% tikz ellipse
+\usetikzlibrary{shapes.geometric}
+
 %%% END Article customizations
 
 \title{\vspace{-2cm}CS 5180 - Final Project Notes}
@@ -94,13 +100,122 @@ A naive treatment of knowledge about specific cards would produce a massive stat
 
 Ultimately the game allows for much simplification. Suits are fungible, except that one is the trump suit for the hand and one (possibly the same) is the led suit for the trick. Additionally, cards themselves are fungible. If a player has a set of cards in their hand of a single suit, and knows that there are no cards in other players’ hands of the same suit and between the ranks of the set, then they are all functionally the same card because they have the same chance of winning in a particular situation. Once card values have merged in this way they will never unmerge.
 
-TODO
+For any game state, since the player knows much about which cards are where or are likely to be where, a card-counting agent can calculate exactly how many cards could appear that would beat a given card. It can then abstract the large amount of information it has into a value for each card, and to combine those cards into groups of cards with the same value. Ultimately, this leads to a representation of the state which is much simplified compared to all of the information the agent actually has. An agent's hidden state is composed of all of the information about exact cards and where they can be. But the agent only needs to know, in the moment, a simplified representation of its hand and how many tricks it must win in the remaining hand, and it will use this simplified state to evaluate its value function. TODO THIS IS UNCLEAR
 
-Ultimately, this leads to a representation of the state which is much simplified compared to all of the information the agent actually has. This hidden state is composed of all of the information about exact cards and where they can be. But the agent only needs to know, in the moment, a simplified representation of its hand and how many tricks it must win in the remaining hand.
+State transitions become simplified in this representation. A state is composed of a hand of N cards and a goal of T remaining tricks to win. After an action is taken, the rest of the agents take their actions, and the agent arrives at a new state. This state will have exactly N-1 cards, and the agent is in control of which card was removed. However, it is generally not in control of whether T has remained the same or decreased by exactly one. Eventually this leads to a state where there are no cards in hand. In these states, any action (which can be restricted to a single null action) gives a reward and leads to a final terminal state. This reward is only positive when the bet was achieved (T=0) and increasingly negative otherwise. Also, since the agent has no control over the length of the game it does not make sense to discount rewards.
 
-State transitions become simplified in this representation. A state is composed of a hand of N cards and a goal of T remaining tricks to win. After an action is taken, the rest of the agents take their actions, and the agent arrives at a new state. This state will have exactly N-1 cards, and the agent is in control of which card was removed. However, it is generally not in control of whether T has remained the same or decreased by exactly one.
+%\def\layersep{2.5cm}
+%\begin{figure}[h!]
+%\centering
+%\begin{tikzpicture}[shorten >=1pt,->,draw=black!50, node distance=\layersep]
+%    \tikzstyle{every pin edge}=[<-,shorten <=1pt]
+%    \tikzstyle{neuron}=[circle,fill=black!25,minimum size=17pt,inner sep=0pt]
+%    \tikzstyle{input neuron}=[neuron, fill=green!50];
+%    \tikzstyle{output neuron}=[neuron, fill=red!50];
+%    \tikzstyle{hidden neuron}=[neuron, fill=blue!50];
+%    \tikzstyle{annot} = [text width=4em, text centered]
+%
+%    % Draw the input layer nodes
+%    \foreach \name / \y in {1,...,4}
+%    % This is the same as writing \foreach \name / \y in {1/1,2/2,3/3,4/4}
+%        \node[input neuron, pin=left:Input \#\y] (I-\name) at (0,-\y) {};
+%
+%    % Draw the hidden layer nodes
+%    \foreach \name / \y in {1,...,5}
+%        \path[yshift=0.5cm]
+%            node[hidden neuron] (H-\name) at (\layersep,-\y cm) {};
+%
+%    % Draw the output layer node
+%    \node[output neuron,pin={[pin edge={->}]right:Output}, right of=H-3] (O) {};
+%
+%    % Connect every node in the input layer with every node in the
+%    % hidden layer.
+%    \foreach \source in {1,...,4}
+%        \foreach \dest in {1,...,5}
+%            \path (I-\source) edge (H-\dest);
+%
+%    % Connect every node in the hidden layer with the output layer
+%    \foreach \source in {1,...,5}
+%        \path (H-\source) edge (O);
+%
+%    % Annotate the layers
+%    \node[annot,above of=H-1, node distance=1cm] (hl) {Trick 1};
+%    \node[annot,left of=hl] {End-Of-Hand States};
+%    \node[annot,right of=hl] {Terminal State};
+%\end{tikzpicture}
+%\caption{State Diagram for an Agent during a Hand}
+%\label{fig:states}
+%\end{figure}
 
-The 
+%\begin{figure}[h!]
+%\centering
+%\begin{neuralnetwork}
+%\newcommand{\h}[2]{$\begin{matrix}\{H(#1)\}\\T=#2\end{matrix}$}
+%\newcommand{\p}[4] {$p_{#2,#4}$}
+%\setdefaultlinklabel{\p}
+%\inputlayer[count=1, bias=false, text=\h]
+%\foreach \col in {2,...,4}{ \inputlayer[count=\col, bias=false, text=\h] \linklayers }
+%%\foreach \n in {1,...,3}{
+%%    \foreach \m in {1,2}{
+%%        \link[style={}, labelpos=near start, from layer=0, from node=\n, to layer=1, to node=\m]
+%%    }
+%%}
+%\outputlayer[count=1, text=$S_t$] \linklayers
+%\end{neuralnetwork}
+%\caption{State Diagram for an Agent during a Hand}
+%\label{fig:states}
+%\end{figure}
+
+%\begin{figure}[h!]
+%\centering
+%\begin{tikzpicture}[node distance={15mm}, thick, main/.style = {draw, circle}] 
+%%\node[main] (1) {$x_1$};
+%%\foreach \row in {2,...,4}{
+%%	\node[main] (\row) [right of = \pgfmathsetmacro{\result{\row-1}}] {$a$};
+%%%	\foreach \col in {2,...,\row}{
+%%%		\node[main] (1) [above right of 
+%%%	}
+%%}
+%%\node[main] (2) [above right of=1] {$x_2$};
+%%\node[main] (3) [below right of=1] {$x_3$}; 
+%%\node[main] (4) [above right of=3] {$x_4$}; 
+%%\node[main] (5) [above right of=4] {$x_5$}; 
+%%\node[main] (6) [below right of=4] {$x_6$}; 
+%%\draw[->] (1) -- (2); 
+%%\draw[->] (1) -- (3); 
+%%\draw (1) to [out=135,in=90,looseness=1.5] (5); 
+%%\draw (1) to [out=180,in=270,looseness=5] (1); 
+%%\draw (2) -- (4); 
+%%\draw (3) -- (4); 
+%%\draw (5) -- (4); 
+%%\draw[->] (5) to [out=315, in=315, looseness=2.5] (3); 
+%%\draw[->] (6) -- node[midway, above right, sloped, pos=1] {+1} (4); 
+%\node \foreach \col in {1,...,4} \foreach \row in {1,...,\col} [draw] at (\col,\row) {\col,\row};
+%\end{tikzpicture} 
+%\caption{State Diagram for an Agent during a Hand}
+%\label{fig:states}
+%\end{figure}
+
+\begin{figure}[h!]
+\centering
+\begin{tikzpicture} [thick, main/.style = {draw,ellipse}]
+\def\xsep{2}
+\def\ysep{1}
+\def\ncols{3}
+\newcommand{\nodelabel}[2]{$\begin{matrix}\{H(#1)\}\\T=#2\end{matrix}$}
+\node[main] (1) at (\xsep,0) {\nodelabel{N}{B}};
+\foreach \i in {2,...,\ncols} {
+	\pgfmathtruncatemacro{\in}{1-\i}
+	\node[main] (\i*\ncols) at (2*\xsep*\i-\xsep,-2*\ysep+\ysep*\i+\ysep) {\nodelabel{N\in}{B}};
+	\foreach \j in {2,...,\i} {
+		\pgfmathtruncatemacro{\jn}{1-\j}
+		\node[main] (\i*\ncols+\j-1) at (2*\xsep*\i-\xsep,-2*\ysep*\j+\ysep*\i+\ysep) {\nodelabel{N\in}{B\jn}};
+	}
+}
+\end{tikzpicture}
+\caption{State Diagram for an Agent during a Hand}
+\label{fig:states}
+\end{figure}
 
 \section{Action Definitions}
 

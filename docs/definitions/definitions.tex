@@ -77,6 +77,11 @@
 \begin{document}
 \maketitle
 
+BIG CHANGES:
+
+switched to pettingzoo because gymnasium is not well set up to handle multiple agents
+switched to deep w leaning because state space proved to be infeasibly large
+
 \section{State Definitions}
 
 At the beginning of a hand, a player is dealt a number of cards. It then bets a certain number of tricks between 0 and the number of available tricks, inclusive. When a player is presented with a choice of card to play, there are a number of pieces of information they have:
@@ -216,6 +221,21 @@ State transitions become simplified in this representation. A state is composed 
 \caption{State Diagram for an Agent during a Hand}
 \label{fig:states}
 \end{figure}
+
+\subsection{final state representation}
+
+T, hand, pile, whether there is a trump suit (because first suit in hand is always trump suit), whether the led suit is the trump suit (as otherwise it would be the second suit, and the case where there is no led suit should be obvious from the pile)
+
+padding this vector with -1 so it is always the same length is good for consistent indexing and convolution
+
+possible hand representations:
+
+\begin{itemize}
+\item list of card indices - no consistent convolution-friendly stuff, but this is the format that the env should give as an observation
+\item binary list of whether card is in hand
+\item binary list of whether card is in hand, with -1 for cards that have appeared - includes info about game state beyond your own hand
+\item list of card values evaluated by full card counting
+\end{itemize}
 
 \section{Action Definitions}
 

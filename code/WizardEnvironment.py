@@ -5,17 +5,39 @@ import gymnasium as gym
 from WizardDeck import WizardDeck
 
 class WizardEnvironment(gym.Env):
-    def __init__(self, numPlayers: int = 3):
+    metadata = {"render_modes":["ansi"]}
+
+    def __init__(self, numPlayers: int = 3, renderMode = None):
         # number of players
+        self.MIN_PLAYERS = 3
+        self.MAX_PLAYERS = 6
+        assert numPlayers in range(self.MIN_PLAYERS, self.MAX_PLAYERS + 1)
         self.numPlayers = numPlayers
-        
+
+        # render mode
+        assert renderMode is None or renderMode in self.metadata["render_modes"]
+        self.renderMode = renderMode
 
         # deck
         self.deck = WizardDeck()
 
-    def reset(self, seed: Optional[int] = None, ):
+        # round info
+        self.bets = [0] * self.numPlayers
+        self.hands = [] * self.numPlayers        
+
+    def reset(self, hand, seed: Optional[int] = None): # todo add flags to force certain situations
+        # reset rng
+        super().reset(seed=seed)
+
+        # deal hands
+        assert hand > 0 and hand <= self.deck.size / hand        
+        self.deck.shuffle()
+        for i in range(self.numPlayers):
+            self.hands[i] = self.deck.deal()
+
         # reset the terminal flag
         terminated = False
+
         return self.state, terminated
 
     def step(self, act, forcedChance=-1):
@@ -48,16 +70,8 @@ class WizardEnvironment(gym.Env):
         return self.state, reward, terminated
 
     def render(self):
-        # plot the agent and the goal
-        # agent = 1
-        # goal = 2
-        plot_arr = self.grid.copy()
-        plot_arr[self.state[0], self.state[1]] = 1.0
-        plot_arr[self.goal_state[0], self.goal_state[1]] = 2.0
-        plt.clf()
-        fig, arr = plt.subplots(1, 1)
-        arr.set_title(f"state={self.state}, act={self.act}")
-        arr.imshow(plot_arr)
-        plt.show(block=False)
-        plt.pause(1)
-        plt.close(fig)
+        if self.render_mode == "ansi":
+            return(self.toString())
+    
+    def toString(self):
+

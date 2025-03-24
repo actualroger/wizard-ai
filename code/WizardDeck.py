@@ -1,5 +1,15 @@
 
 import numpy.random
+from enum import Enum
+
+class Suit(Enum):
+	JESTER = 0
+	DIAMONDS = 1
+	SPADES = 2
+	HEARTS = 3
+	CLUBS = 4
+	WIZARD = 5
+	NONE = 6
 
 class WizardDeck:
 	def __init__(self):
@@ -9,25 +19,40 @@ class WizardDeck:
 
 		# jesters
 		for j in range(4):
-			self.suits.append(0)
+			self.suits.append(Suit.JESTER)
 			self.values.append(1)
 
 		# normal deck
-		for s in range(1,4+1):
-			for v in range(2,14+1):
-				self.suits.append(s)
-				self.values.append(v)
-
+		for v in range(2,14+1):
+			self.suits.append(Suit.DIAMONDS)
+			self.values.append(v)
+		for v in range(2,14+1):
+			self.suits.append(Suit.SPADES)
+			self.values.append(v)
+		for v in range(2,14+1):
+			self.suits.append(Suit.HEARTS)
+			self.values.append(v)
+		for v in range(2,14+1):
+			self.suits.append(Suit.CLUBS)
+			self.values.append(v)
+		
 		# wizards
 		for w in range(4):
-			self.suits.append(5)
+			self.suits.append(Suit.WIZARD)
 			self.values.append(15)
 
 		self.size = len(self.suits) # total deck size
 		self.numCards = len(self.suits) # number of undealt cards
 		self.state = [v for v in range(len(self.suits))] # current deck state (indexes)
 
-		self.suitNames = ['D','S','H','C'] # diamonds, spades, hearts, clubs
+		self.suitNames = {
+			Suit.JESTER : 'E',
+			Suit.DIAMONDS : 'D',
+			Suit.SPADES : 'S',
+			Suit.HEARTS : 'H',
+			Suit.CLUBS : 'C',
+			Suit.WIZARD : 'W'
+			}
 		self.cardNames = [str(d) for d in range(2,9+1)] + ['X','J','Q','K','A'] # 2 - Ace
 
 	def reset(self):
@@ -50,7 +75,10 @@ class WizardDeck:
 		if not isinstance(cards, list):
 			cards = [cards]
 		# converts indices to human-readable card names
-		return [('E' + str(c+1)) if self.suits[c] == 0 else # jester
-			('W' + str(c-55)) if self.suits[c] == 5 else # wizard
-			(self.cardNames[self.values[c] - 2] + self.suitNames[self.suits[c] - 1]) # suit, value
+		return [('E' + str(c+1)) if self.suits[c] == Suit.JESTER else # jester
+			('W' + str(c-55)) if self.suits[c] == Suit.WIZARD else # wizard
+			(self.cardNames[self.values[c] - 2] + self.toSuitString(self.suits[c])) # suit, value
 			for c in cards]
+
+	def toSuitString(self, suit):
+		return self.suitNames[suit] if suit in self.suitNames.keys() else ''

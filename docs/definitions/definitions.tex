@@ -68,6 +68,14 @@
 % tikz ellipse
 \usetikzlibrary{shapes.geometric}
 
+% rotated text
+\usepackage{rotating}
+
+% table stuff
+%\usepackage{multicolumn}
+\usepackage{multirow}
+%\usepackage{tabularx}
+
 %%% END Article customizations
 
 \title{\vspace{-2cm}CS 5180 - Final Project Notes}
@@ -224,7 +232,7 @@ State transitions become simplified in this representation. A state is composed 
 
 \subsection{final state representation}
 
-T, hand, pile, whether there is a trump suit (because first suit in hand is always trump suit), whether the led suit is the trump suit (as otherwise it would be the second suit, and the case where there is no led suit should be obvious from the pile)
+T, sum(T), hand, pile, whether there is a trump suit (because first suit in hand is always trump suit), whether the led suit is the trump suit (as otherwise it would be the second suit, and the case where there is no led suit should be obvious from the pile)
 
 padding this vector with -1 so it is always the same length is good for consistent indexing and convolution
 
@@ -233,13 +241,68 @@ possible hand representations:
 \begin{itemize}
 \item list of card indices - no consistent convolution-friendly stuff, but this is the format that the env should give as an observation
 \item binary list of whether card is in hand
-\item binary list of whether card is in hand, with -1 for cards that have appeared - includes info about game state beyond your own hand
+\item binary list of whether card is in hand, sorted by wizard-trump-led-other1-other2-jester suit
+\item binary list of whether card is in hand, sorted, with -1 for cards that have appeared - includes info about game state beyond your own hand
 \item list of card values evaluated by full card counting
+\end{itemize}
+
+Therefore:
+
+\begin{itemize}
+\item T
+\item sum(T) across players
+\item trump suit flag
+\item led suit = trump suit flag
+\item pile (padded)
+\item hand (padded, sorted)
 \end{itemize}
 
 \section{Action Definitions}
 
 The action space is large, but the permissible actions in any given state are small. However many groups of cards are in an agent’s hand are the number of actions available to it.
+
+actions:
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{|c|c|} \hline
+Index & Action \\ \hline
+[0, 59] & place card at index $i$ \\ \hline
+[60, 80] & bet $i-60$ \\ \hline
+[81, 84] & choose suit for trump \\ \hline
+[85] & null action used for receiving reward \\ \hline
+\end{tabular}
+\caption{Action Space Definition}
+\end{table}
+
+\section{State Transition}
+
+Starting with the trick leader we proceed around the table comparing cards. If a card is better than the current winner, that card becomes the winner. The possibilities are encoded in Table \ref{tab:trickwinner}.
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{ccc}
+\begin{tabular}{c|l}
+\multicolumn{2}{c}{Legend} \\ \hline
+Y & New Card Wins \\
+X & Current Winner Remains \\
+$>$ & Compare Card Values \\
+N/A & Impossible \\
+\end{tabular}
+& \hspace{5mm} &
+\begin{tabular}{rrccccc}
+\multicolumn{1}{l}{}      & \multicolumn{1}{l}{}        & \multicolumn{5}{c}{Current Winner}                                                                                                                                               \\
+\multicolumn{1}{l}{}      & \multicolumn{1}{l}{}        & Wizard                              & Trump                               & Led                                 & Other                    & Jester                              \\ \cline{3-7} 
+\multirow{5}{*}{\begin{turn}{90}New Card\end{turn}} & \multicolumn{1}{r|}{Wizard} & \multicolumn{1}{c|}{\textgreater{}} & \multicolumn{1}{c|}{\textgreater{}} & \multicolumn{1}{c|}{\textgreater{}} & \multicolumn{1}{c|}{N/A} & \multicolumn{1}{c|}{\textgreater{}} \\ \cline{3-7} 
+                          & \multicolumn{1}{r|}{Trump}  & \multicolumn{1}{c|}{\textgreater{}} & \multicolumn{1}{c|}{\textgreater{}} & \multicolumn{1}{c|}{Y}              & \multicolumn{1}{c|}{N/A} & \multicolumn{1}{c|}{\textgreater{}} \\ \cline{3-7} 
+                          & \multicolumn{1}{r|}{Led}    & \multicolumn{1}{c|}{\textgreater{}} & \multicolumn{1}{c|}{X}              & \multicolumn{1}{c|}{\textgreater{}} & \multicolumn{1}{c|}{N/A} & \multicolumn{1}{c|}{\textgreater{}} \\ \cline{3-7} 
+                          & \multicolumn{1}{r|}{Other}  & \multicolumn{1}{c|}{\textgreater{}} & \multicolumn{1}{c|}{X}              & \multicolumn{1}{c|}{X}              & \multicolumn{1}{c|}{N/A} & \multicolumn{1}{c|}{\textgreater{}} \\ \cline{3-7} 
+                          & \multicolumn{1}{r|}{Jester} & \multicolumn{1}{c|}{\textgreater{}} & \multicolumn{1}{c|}{\textgreater{}} & \multicolumn{1}{c|}{\textgreater{}} & \multicolumn{1}{c|}{N/A} & \multicolumn{1}{c|}{\textgreater{}} \\ \cline{3-7} 
+\end{tabular}
+\end{tabular}
+\caption{Trick Winner Logic}
+\label{tab:trickwinner}
+\end{table}
 
 \section{Training Procedure}
 

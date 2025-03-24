@@ -56,7 +56,6 @@ class HumanAgent:
             while True:
                 userInput = input("Input card from %s : " % ' '.join(allowedHandString))
                 # test user input
-                # print(userInput, allowedHandString, userInput in allowedHandString)
                 if userInput.upper() in allowedHandString: # only return if valid
                     return [allowedHand[i] for i in range(len(allowedHand)) if userInput.upper() == allowedHandString[i]][0]
                 elif len(allowedHandString) == 1: # one move

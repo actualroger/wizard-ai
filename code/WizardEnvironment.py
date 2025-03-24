@@ -1,17 +1,8 @@
 
 import numpy as np
 from typing import Optional
-import gymnasium as gym
 from WizardDeck import WizardDeck, Suit
 from enum import Enum
-
-# from pettingzoo.classic.rlcard_envs.rlcard_base import RLCardBase # useful for graphics?
-from pettingzoo.utils import wrappers
-
-# def env(**kwargs):
-#     env = raw_env(**kwargs)
-#     env = wrappers.OrderEnforcingWrapper(env)
-#     return env
 
 class Phase(Enum):
 	TERMINAL = 0

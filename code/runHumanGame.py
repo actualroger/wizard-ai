@@ -33,7 +33,6 @@ for round in range(startRound, endRound + 1):
             print("Agent %d received reward %d"%(agent, reward))
             scores[agent] += reward
     
-    # scores = [scores[i] + env.scores[i] for i in range(numPlayers)] # record scores
     print("End of round scores:", scores, "\n")
 
 print("\nEnd of game")

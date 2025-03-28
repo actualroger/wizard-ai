@@ -1,23 +1,30 @@
 
+import random
+import numpy as np
+
 import WizardEnvironment
 from HumanAgent import HumanAgent
+from RandomAgent import RandomAgent
 
-numPlayers = 3
+numPlayers = 4
+numHumans = 1
 startRound = 1
-endRound = 3
-dealer = 0
-scores = [0] * numPlayers
+endRound = 15
 
 seed = 0
+verbosity = 2
+dealer = 0
 
-env = WizardEnvironment.env(renderMode="ansi", numPlayers=numPlayers, verbose=True)
-agents = [HumanAgent(env) for i in range(numPlayers)]
+scores = [0] * numPlayers
+
+random.seed(seed=seed)
+np.random.seed(seed)
+
+env = WizardEnvironment.env(renderMode="ansi", numPlayers=numPlayers, verbosity=verbosity)
+agents = [HumanAgent(env) for _ in range(numHumans)] + [RandomAgent(env, verbosity=verbosity) for _ in range(numPlayers - numHumans)]
 
 for round in range(startRound, endRound + 1):
-    if round == 1:
-        env.reset(round, dealer=dealer, seed=seed)
-    else:
-        env.reset(round, dealer=dealer)
+    env.reset(round, dealer=dealer)
     print("\nStarted round %d with dealer %d\n" % (round, dealer))
     dealer = (dealer + 1) % numPlayers
     

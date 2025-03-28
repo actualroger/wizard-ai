@@ -1,8 +1,8 @@
 
-import numpy as np
 from typing import Optional
-from WizardDeck import WizardDeck, Suit
 from enum import Enum
+
+from WizardDeck import WizardDeck, Suit
 
 class Phase(Enum):
 	TERMINAL = 0
@@ -14,7 +14,7 @@ class Phase(Enum):
 class env():
 	metadata = {"renderModes":["ansi"]}
 
-	def __init__(self, numPlayers: int = 3, renderMode: str = None, verbose: bool = False):
+	def __init__(self, numPlayers: int = 3, renderMode: str = None, verbosity: int = 0):
 		# number of players
 		self.MIN_PLAYERS = 3
 		self.MAX_PLAYERS = 6
@@ -26,7 +26,7 @@ class env():
 		self.renderMode = renderMode
 
 		# printing flag
-		self.verbose = verbose
+		self.verbosity = verbosity
 
 		# deck
 		self.deck = WizardDeck()
@@ -57,13 +57,9 @@ class env():
 		self.agentObservation = [] * self.numPlayers # agent last observation
 		self.terminated = True # whole env is done
 
-	def reset(self, round, dealer: Optional[int] = 0, seed: Optional[int] = None): # TODO add flags to force certain situations
-		if self.verbose:
-			print("Resetting with round = %d, dealer = %d, seed = %s" % (round, dealer, str(seed)))
-
-		# reset rng
-		if seed is not None:
-			np.random.seed(seed=seed)
+	def reset(self, round, dealer: Optional[int] = 0): # TODO add flags to force certain situations
+		if self.verbosity > 0:
+			print("Resetting with round = %d, dealer = %d" % (round, dealer))
 
 		# reset the terminal flag
 		self.terminated = False
@@ -93,7 +89,7 @@ class env():
 
 	def setTrump(self): # sets the trump suit
 		if self.deck.numCards == 0:
-			if self.verbose:
+			if self.verbosity > 0:
 				print("Set no trump (empty deck)")
 			self.trumpSuit = [] # no trump
 			self.incrementAgent() # player after dealer bets first
@@ -103,16 +99,16 @@ class env():
 		rawSuit = self.deck.suits[self.previousPiles[0]]
 		if rawSuit == Suit.JESTER: # jester
 			self.trumpSuit = Suit.NONE
-			if self.verbose:
+			if self.verbosity > 0:
 				print("Setting no trump (Jester)")
 			self.incrementAgent() # player after dealer bets first
 		elif rawSuit == Suit.WIZARD: # wizard
 			self.playPhase = Phase.TRUMP
-			if self.verbose:
+			if self.verbosity > 0:
 				print("Entering trump phase")
 		else:
 			self.trumpSuit = rawSuit # normal card
-			if self.verbose:
+			if self.verbosity > 0:
 				print("Set trump to", self.deck.toSuitString(self.trumpSuit))
 			self.incrementAgent() # player after dealer bets first		
 
@@ -139,36 +135,44 @@ class env():
 			roundNum = len(self.hands[0])
 			actionMask = [False] * 60 + [True] * (1 + roundNum) + [False] * (20 - roundNum + 4 + 1) # bet 0-N
 		elif self.playPhase == Phase.PLAY:
+			if self.verbosity > 1:
+				print('Finding cards from', self.deck.toString(self.hands[agent]), 'for pile', self.deck.toString(self.pile), 'led =', self.ledSuit)
 			actionMask = [card in self.hands[agent] and ( # card must be in hand
 							len(self.pile) == 0 or # we are the leading card
 							self.ledSuit == Suit.JESTER or # led jester
 							self.ledSuit == Suit.WIZARD or # wizard on pile
 							self.deck.suits[card] == self.ledSuit) # we match the leading card
 						   for card in range(self.deck.size)] + [False] * (21 + 4 + 1)
+			if self.verbosity > 1:
+				print('Found normal cards:', self.deck.toString([i for i in range(len(actionMask)) if actionMask[i]]))
 			if not any(actionMask): # no valid cards in hand
 				actionMask = [card in self.hands[agent] for card in range(self.deck.size)] # play any card in hand
+				if self.verbosity > 1:
+					print('No valid cards: allowing whole hand')
 			else: # check for non-led allowed cards
 				for i in range(len(self.hands[agent])):
 					if (self.deck.suits[self.hands[agent][i]] == Suit.WIZARD or # wizards always allowed
 						self.deck.suits[self.hands[agent][i]] == Suit.JESTER): # jesters always allowed
 						actionMask[self.hands[agent][i]] = True
+			if self.verbosity > 0:
+				print('Agent can play:', self.deck.toString([i for i in range(len(actionMask)) if actionMask[i]]))
 		
 		return actionMask
 
 	def calculateReward(self, agent): # get agent score
 		score = 10 * ((2 + self.bets[agent]) if self.wins[agent] == self.bets[agent] else -abs(self.wins[agent] - self.bets[agent]))
-		if self.verbose:
+		if self.verbosity > 0:
 			print('Agent %d bet %d and won %d for %d points' % (agent, self.bets[agent], self.wins[agent], score) )
 		return score
 	
 	def incrementAgent(self): # gets next agent
-		if self.verbose:
+		if self.verbosity > 0:
 			print("Looking for agent after %d" % self.currentAgent)
 
 		if self.terminated or all(self.agentTerminated): # all done
 			self.currentAgent = -1
 			self.terminated = True
-			if self.verbose:
+			if self.verbosity > 0:
 				print("Found no active agents")
 			return self.currentAgent
 		
@@ -180,7 +184,7 @@ class env():
 			if nextAgent: # found one
 				self.currentAgent = nextAgent[0]
 		
-		if self.verbose:
+		if self.verbosity > 0:
 			print("Found next agent %d" % self.currentAgent)
 
 		return self.currentAgent
@@ -224,7 +228,7 @@ class env():
 				for i in range(1, self.numPlayers):
 					otherPlayer = (self.leader + i) % self.numPlayers
 					otherCard = self.pile[i]
-					if self.verbose:
+					if self.verbosity > 1:
 						print("Comparing agent %d's card %s with agent %d's card %s" % (winner, self.deck.toString(winnerCard)[0], otherPlayer, self.deck.toString(otherCard)[0]))
 						print(self.deck.suits[otherCard] == self.deck.suits[winnerCard], # same suit
 							self.deck.suits[otherCard] == Suit.WIZARD, # new wizard
@@ -238,12 +242,12 @@ class env():
 						)
 					#       TRICK WINNER LOGIC:
 					#               CURRENT
-					#           W   T   L   O   J
-					#       W   >   >   >   N/A >
-					#       T   >   >   Y   N/A >
-					# NEW   L   >   X   >   N/A >
-					#       O   >   X   X   N/A >
-					#       J   >   >   >   N/A >
+					#           Wiz Tru Led Oth Jes
+					#       Wiz >   >   >   N/A >
+					#       Tru >   >   Y   N/A >
+					# NEW   Led >   X   >   N/A >
+					#       Oth >   X   X   N/A >
+					#       Jes >   >   >   N/A >
 					if (
 						   (self.deck.suits[otherCard] == self.deck.suits[winnerCard] or # same suit
 							self.deck.suits[otherCard] == Suit.WIZARD or # new wizard
@@ -257,41 +261,42 @@ class env():
 						):
 						winner = otherPlayer # new winner
 						winnerCard = otherCard
-						if self.verbose:
+						if self.verbosity > 1:
 							print("New winner")
-					elif self.verbose:
+					elif self.verbosity > 1:
 						print("Same winner")
 				self.wins[winner] += 1 # winner takes trick
 				self.currentAgent = winner # winner plays next
 				self.leader = self.currentAgent
-				if self.verbose:
+				if self.verbosity > 0:
 					print("Player %d won trick" % winner)
 				self.previousPiles.extend(self.pile)
 				self.pile = []
+				self.ledSuit = Suit.NONE
 			else:
 				self.incrementAgent() # next player
 		elif self.playPhase == Phase.BET:
 			self.bets[agent] = act - 60 # 60-80 -> bet 0-20
 			self.incrementAgent() # next player
 		elif self.playPhase == Phase.TRUMP:
-			self.trumpSuit = act - 80 # 81-84 -> suits 1-4
-			if self.verbose:
+			self.trumpSuit = Suit(act - 80) # 81-84 -> suits 1-4
+			if self.verbosity > 0:
 				print("Dealer set trump to", self.deck.toSuitString(self.trumpSuit))
 			self.incrementAgent() # next player
 
 		# check for phase change
 		if self.playPhase == Phase.PLAY and not any(self.hands): # end of round
 			self.playPhase = Phase.TERMINAL
-			if self.verbose:
+			if self.verbosity > 0:
 				print("Entering Terminal")
 		elif self.playPhase == Phase.BET and all([isinstance(a, int) for a in self.bets]): # everyone has bet
 			self.leader = self.currentAgent
 			self.playPhase = Phase.PLAY
-			if self.verbose:
+			if self.verbosity > 0:
 				print("Entering Play with leader %d" % self.currentAgent)
 		elif self.playPhase == Phase.TRUMP and self.trumpSuit != Suit.NONE: # trump has been set
-			self.playPhase == Phase.BET
-			if self.verbose:
+			self.playPhase = Phase.BET
+			if self.verbosity > 0:
 				print("Entering Bet starting with agent %d" % self.currentAgent)
 		
 		# return

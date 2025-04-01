@@ -7,7 +7,7 @@ Here is the plotting function you can directly use to plot the figures needed fo
 """
 
 # plot function
-def plot_curves(arr_list, legend_list, color_list, upper_bound = [], xlabel: str = '', ylabel: str = ''):
+def plot_curves(arr_list, legend_list, color_list, x_values = [], upper_bound = [], upper_bound_label: str = 'Upper Bound', xlabel: str = '', ylabel: str = ''):
     """
     Args:
         arr_list (list): list of results arrays to plot
@@ -25,9 +25,11 @@ def plot_curves(arr_list, legend_list, color_list, upper_bound = [], xlabel: str
     # cast input if necessary
     if isinstance(arr_list, list):
         arr_list = np.array(arr_list)
+    # if isinstance(upper_bound, list):
+    #     upper_bound = np.array(upper_bound)
 
     # set the figure type
-    plt.clf()
+    # plt.clf()
     fig, ax = plt.subplots(figsize=(12, 8))
     
     # set labels
@@ -35,25 +37,27 @@ def plot_curves(arr_list, legend_list, color_list, upper_bound = [], xlabel: str
         ax.set_ylabel(ylabel)
     if xlabel:
         ax.set_xlabel(xlabel)
-    if upper_bound:
-        ax.set_ylim(-0.1, upper_bound.mean() + 0.1)
+    # if upper_bound:
+    #     ax.set_ylim(-0.1, upper_bound.mean() + 0.1)
 
     # plot results
     h_list = []
     for arr, legend, color in zip(arr_list, legend_list, color_list):
+        x_data = range(arr.shape[1]) if len(x_values) == 0 else x_values
         # compute the standard error
         arr_err = arr.std(axis=0) / np.sqrt(arr.shape[0])
         # plot the mean
-        h, = ax.plot(range(arr.shape[1]), arr.mean(axis=0), color=color, label=legend)
+        h, = ax.plot(x_data, arr.mean(axis=0), color=color, label=legend)
         # plot the confidence band
         arr_err = 1.96 * arr_err
-        ax.fill_between(range(arr.shape[1]), arr.mean(axis=0) - arr_err, arr.mean(axis=0) + arr_err, alpha=0.3, color=color)
+        ax.fill_between(x_data, arr.mean(axis=0) - arr_err, arr.mean(axis=0) + arr_err, alpha=0.3, color=color)
         # save the plot handle
         h_list.append(h) 
     
     # plot the upper bound
-    if upper_bound:
-        h = plt.axhline(y=upper_bound.mean(), color='k', linestyle='--', label="upper bound")
+    if len(upper_bound) > 0:
+        x_data = range(len(upper_bound)) if len(x_values) == 0 else x_values
+        h, = ax.plot(x_data, upper_bound, color='k', linestyle='--', label=upper_bound_label)
         h_list.append(h)
     
     # plot legends

@@ -1,9 +1,12 @@
 
+import random
+import numpy.random
+
 import WizardEnvironment
 from HumanAgent import HumanAgent
 from RandomAgent import RandomAgent
-from Rollout import rolloutGame
-from Plot import plot_curves
+from RolloutUtils import rolloutGame
+from PlotUtils import plot_curves
 
 numPlayers = 6
 numHumans = 0
@@ -14,11 +17,20 @@ seed = 0
 verbosity = 0
 dealer = 0
 
+random.seed(seed)
+numpy.random.seed(seed)
+
 env = WizardEnvironment.env(renderMode="ansi", numPlayers=numPlayers, verbosity=verbosity)
 agents = [HumanAgent(env) for _ in range(numHumans)] + [RandomAgent(env, verbosity=verbosity) for _ in range(numPlayers - numHumans)]
 
-scores = []
+scores = [[] for _ in range(numPlayers)]
 for _ in range(numGames):
-	scores.append(rolloutGame(env, agents, dealer=dealer, verbosity=verbosity))
+	thisRoundScores = rolloutGame(env, agents, dealer=dealer, verbosity=verbosity)
+	for player in range(numPlayers):
+		scores[player].append(thisRoundScores[player])
 
-plot_curves(scores, ['Agent %d'%i for i in range(len(agents))], ['r','g','b','k'], xlabel='Round', ylabel='Score')
+roundNumbers = range(1, 60 // numPlayers + 1)
+expectedScores = [20 + 10 * (round / (0.0 + numPlayers)) for round in roundNumbers]
+
+plotColors = ['r','g','b','k','y','c']
+plot_curves(scores, ['Agent %d'%i for i in range(len(agents))], plotColors[:numPlayers], x_values=roundNumbers, xlabel='Round', ylabel='Score', upper_bound=expectedScores, upper_bound_label='Nominal')

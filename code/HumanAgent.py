@@ -8,13 +8,14 @@ class HumanAgent:
     
     def getAction(self, obs):
         # print observation
-        print("Received game state:\n\tHand: %s\n\tPile: %s\n\tPrevious: %s\n\tTrump: %s\n\tNeeded: %d\n\tTotal Needed: %d" % (
+        print("Received game state:\n\tHand: %s\n\tPile: %s\n\tPrevious: %s\n\tTrump: %s\n\tNeeded: %d\n\tTotal Needed: %d\n\tPlayers: %d" % (
               ' '.join(self.env.deck.toString(obs["observation"]["hand"])),
               ' '.join(self.env.deck.toString(obs["observation"]["pile"])),
               ' '.join(self.env.deck.toString(obs["observation"]["previous"])),
               ' '.join(self.env.deck.toSuitString(obs["observation"]["trump"])),
               obs["observation"]["selfNeeded"],
-              obs["observation"]["totalNeeded"] )
+              obs["observation"]["totalNeeded"],
+              obs["observation"]["numPlayers"] )
               )
         # print action mask
         print("Action mask ", [i for i in range(len(obs["actionMask"])) if obs["actionMask"][i]] )

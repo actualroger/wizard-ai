@@ -1,15 +1,14 @@
 
 import random
 
-from WizardEnvironment import Phase
-from WizardDeck import WizardDeck, Suit
+from Agent import Agent
 
-class RandomAgent:
+class RandomAgent(Agent):
     def __init__(self, env, verbosity: int = 0):
-        self.env = env
+        super().__init__(env, {})
         self.verbosity = verbosity
     
-    def getAction(self, obs):
+    def getAction(self, obs) -> int:
         if self.verbosity > 1:
             print("Received game state:\n\tHand: %s\n\tPile: %s\n\tPrevious: %s\n\tTrump: %s\n\tNeeded: %d\n\tTotal Needed: %d" % (
                 ' '.join(self.env.deck.toString(obs["observation"]["hand"])),

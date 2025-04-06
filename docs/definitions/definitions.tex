@@ -251,10 +251,16 @@ Therefore:
 \begin{itemize}
 \item T
 \item sum(T) across players
+\item number of players
 \item trump suit flag
 \item led suit = trump suit flag
-\item pile (padded)
-\item hand (padded, sorted)
+\item card state (padded, sorted) =
+$\begin{cases}
+2 & \text{in pile} \\
+1 & \text{in hand} \\
+0 & \text{unseen} \\
+-1 & \text{in previous piles} \\
+\end{cases}$
 \end{itemize}
 
 \section{Action Definitions}

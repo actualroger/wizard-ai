@@ -71,6 +71,17 @@ class WizardDeck:
 		self.numCards -= n
 		return self.state[self.numCards:curNum]
 
+	def reorderCards(self, trumpSuit: Suit, ledSuit: Suit):
+		# reorders deck indices to [wizard, trump, led, other, other, jester]
+		#						or [wizard, trump/led, other, other, other, jester]
+		#						or [wizard, led, other, other, other, jester]
+		#						or [wizard, other, other, other, other, jester]
+		# with suits staying in default order if either trump or led not in four normal suits
+		normalSuits = [Suit.DIAMONDS, Suit.SPADES, Suit.HEARTS, Suit.CLUBS]
+		sortedSuits = [trumpSuit, ledSuit] + normalSuits
+		sortedSuits = [sortedSuits[i] for i in range(len(sortedSuits)) if sortedSuits[i] in normalSuits and sortedSuits[i] not in sortedSuits[:i]]
+		return [56,57,58,59] + [i for s in sortedSuits for i in range((s.value-1)*13+4, s.value*13+4)] + [0,1,2,3]
+
 	def toString(self, cards):
 		if not isinstance(cards, list):
 			cards = [cards]

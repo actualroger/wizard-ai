@@ -1,18 +1,20 @@
 
 from WizardEnvironment import Phase
-from WizardDeck import WizardDeck, Suit
+from WizardDeck import Suit
+from Agent import Agent
 
-class HumanAgent:
+class HumanAgent(Agent):
     def __init__(self, env):
-        self.env = env
+        super().__init__(env, {})
     
-    def getAction(self, obs):
+    def getAction(self, obs) -> int:
         # print observation
-        print("Received game state:\n\tHand: %s\n\tPile: %s\n\tPrevious: %s\n\tTrump: %s\n\tNeeded: %d\n\tTotal Needed: %d\n\tPlayers: %d" % (
+        print("Received game state:\n\tHand: %s\n\tPile: %s\n\tPrevious: %s\n\tTrump: %s\n\tLed: %s\n\tNeeded: %d\n\tTotal Needed: %d\n\tPlayers: %d" % (
               ' '.join(self.env.deck.toString(obs["observation"]["hand"])),
               ' '.join(self.env.deck.toString(obs["observation"]["pile"])),
               ' '.join(self.env.deck.toString(obs["observation"]["previous"])),
               ' '.join(self.env.deck.toSuitString(obs["observation"]["trump"])),
+              ' '.join(self.env.deck.toSuitString(obs["observation"]["led"])),
               obs["observation"]["selfNeeded"],
               obs["observation"]["totalNeeded"],
               obs["observation"]["numPlayers"] )

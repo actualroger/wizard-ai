@@ -43,12 +43,16 @@ class env():
 		self.leader = -1 # who dealt this hand
 
 		# action masks
-		self.actionMasks = {
+		self.ACTION_MASKS = {
 			Phase.PLAY : [True] * 60 + [False] * (21 + 4 + 1), # play card 0-59
 			Phase.BET : [False] * 60 + [True] * 21 + [False] * (4 + 1), # bet 0-20
 			Phase.TRUMP : [False] * (60 + 21) + [True] * 4 + [False] * 1, # choose trump suit 1-4
 			Phase.TERMINAL : [False] * (60 + 21 + 4) + [True] * 1, # null action to receive reward
 		}
+		self.ACTION_DIM = 86
+
+		# observation
+		self.OBSERVATION_DIM = 65
 
 		# agent management
 		self.dealer = -1 # who dealt
@@ -117,6 +121,7 @@ class env():
 			   "pile": self.pile,
 			   "previous": self.previousPiles,
 			   "trump": self.trumpSuit,
+			   "led": self.ledSuit,
 			   "selfNeeded": (self.bets[agent] if isinstance(self.bets[agent], int) else 0) - self.wins[agent],
 			   "totalNeeded": sum([s for s in self.bets if isinstance(s, int)]) - sum(self.wins),
 			   "numPlayers": self.numPlayers}
@@ -129,9 +134,9 @@ class env():
 		if agent != self.currentAgent: # wrong turn
 			return [0] * (60 + 21 + 4 + 1)
 		
-		action_mask = []
+		actionMask = []
 		if self.playPhase == Phase.TRUMP or self.playPhase == Phase.TERMINAL:
-			actionMask = self.actionMasks[self.playPhase]
+			actionMask = self.ACTION_MASKS[self.playPhase]
 		elif self.playPhase == Phase.BET:
 			roundNum = len(self.hands[0])
 			actionMask = [False] * 60 + [True] * (1 + roundNum) + [False] * (20 - roundNum + 4 + 1) # bet 0-N
@@ -143,7 +148,7 @@ class env():
 							self.ledSuit == Suit.JESTER or # led jester
 							self.ledSuit == Suit.WIZARD or # wizard on pile
 							self.deck.suits[card] == self.ledSuit) # we match the leading card
-						   for card in range(self.deck.size)] + [False] * (21 + 4 + 1)
+						   for card in range(self.deck.size)]
 			if self.verbosity > 1:
 				print('Found normal cards:', self.deck.toString([i for i in range(len(actionMask)) if actionMask[i]]))
 			if not any(actionMask): # no valid cards in hand
@@ -157,6 +162,7 @@ class env():
 						actionMask[self.hands[agent][i]] = True
 			if self.verbosity > 0:
 				print('Agent can play:', self.deck.toString([i for i in range(len(actionMask)) if actionMask[i]]))
+			actionMask = actionMask + [False] * (21 + 4 + 1)
 		
 		return actionMask
 

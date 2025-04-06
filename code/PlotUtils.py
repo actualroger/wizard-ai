@@ -2,12 +2,8 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-"""
-Here is the plotting function you can directly use to plot the figures needed for Q5 and Q6
-"""
-
 # plot function
-def plot_curves(arr_list, legend_list, color_list, x_values = [], upper_bound = [], upper_bound_label: str = 'Upper Bound', xlabel: str = '', ylabel: str = ''):
+def plotCurves(arr_list, legend_list, color_list, x_values = [], upper_bound = [], upper_bound_label: str = 'Upper Bound', xlabel: str = '', ylabel: str = ''):
     """
     Args:
         arr_list (list): list of results arrays to plot
@@ -37,8 +33,6 @@ def plot_curves(arr_list, legend_list, color_list, x_values = [], upper_bound = 
         ax.set_ylabel(ylabel)
     if xlabel:
         ax.set_xlabel(xlabel)
-    # if upper_bound:
-    #     ax.set_ylim(-0.1, upper_bound.mean() + 0.1)
 
     # plot results
     h_list = []
@@ -63,3 +57,26 @@ def plot_curves(arr_list, legend_list, color_list, x_values = [], upper_bound = 
     # plot legends
     ax.legend(handles=h_list)  
     plt.show()
+
+# plot, but autogenerate agent names and colors
+def plotCurvesAutolabel(arr_list, **kwargs):
+    numPlayers = len(arr_list)
+    plotColors = ['r','g','b','k','y','c']
+    plotCurves(arr_list, ['Agent %d'%i for i in range(numPlayers)], plotColors[:numPlayers], **kwargs)
+    # TODO this should be able to infer numPlayers
+
+# plot scores vs. round for each agent
+def plotAgentScores(scores):
+    numPlayers = len(scores)
+    roundNumbers = range(1, 60 // numPlayers + 1)
+    expectedScores = [20 + 10 * (round / (0.0 + numPlayers)) for round in roundNumbers]
+    plotCurvesAutolabel(scores, x_values=roundNumbers, xlabel='Round', ylabel='Score', upper_bound=expectedScores, upper_bound_label='Nominal')
+
+# trim all dimensions of an n-dimensional list
+def trimDims(L):
+    if isinstance(L, list):
+        if isinstance(L[0], list):
+            minLen = min([len(l) for l in L])
+            L = [l[:minLen] for l in L]
+        L = [trimDims(l) for l in L]
+    return L

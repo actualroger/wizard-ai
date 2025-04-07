@@ -29,7 +29,7 @@ def trainMultipleDQNAgents(seed, numRuns, numAgents):
         'hidden_layer_dim': 64,
         'gamma': 1,
 
-        'total_training_time_step': 5_000_000,
+        'total_training_time_step': 5_00_000,
 
         'schedule_type': 'linear',
         'epsilon_start_value': 1.0,

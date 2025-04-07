@@ -106,7 +106,7 @@ class NNAgent(Agent):
         self.targetPolicyNet.to(self.device)
 
         # set training parameters
-        self.freqUpdateNehaviorPolicy = params['freq_update_behavior_policy']
+        self.freqUpdateBehaviorPolicy = params['freq_update_behavior_policy']
         self.freqUpdateTargetPolicy = params['freq_update_target_policy']
         self.batchSize = params['batch_size']
         self.startTrainingStep = params['start_training_step']
@@ -199,18 +199,23 @@ class NNAgent(Agent):
     # store new state, which should complete most recent experience tuple
     def storeExperience(self, newState):
         if self.previousState is not None and self.previousReward is not None:
-            self.buffer.add(self.previousState,
-                            self.previousAction,
-                            self.previousActionMask,
-                            self.previousReward,
-                            newState,
-                            self.previousDone)
-            self.checkLearning()
+            self.addToBuffer(
+                (self.previousState,
+                self.previousAction,
+                self.previousActionMask,
+                self.previousReward,
+                newState,
+                self.previousDone) )
+
+    # add experience to buffer
+    def addToBuffer(self, experienceTuple):
+        self.buffer.add(experienceTuple)
+        self.checkLearning()
 
     # consider updating the neural nets
     def checkLearning(self):
         if self.learningActive and self.timestep >= self.startTrainingStep:
-            if not np.mod(self.timestep, self.freqUpdateNehaviorPolicy): # update behavior with batch and save loss
+            if not np.mod(self.timestep, self.freqUpdateBehaviorPolicy): # update behavior with batch and save loss
                 self.trainingLosses.append(self.updateBehaviorPolicy(self.buffer.sampleBatch(self.batchSize)))
             if not np.mod(self.timestep, self.freqUpdateTargetPolicy): # hard update target policy
                 self.updateTargetPolicy()
@@ -235,3 +240,45 @@ class NNAgent(Agent):
         batch_data_tensor['done'] = torch.tensor(done_arr, dtype=torch.float32).view(-1, 1).to(self.device)
 
         return batch_data_tensor
+
+
+# empty Agent which functions as a shell for another agent
+class PassThroughAgent(NNAgent):
+    # constructor
+    def __init__(self, baseAgent: NNAgent):
+        self.baseAgent = baseAgent
+        self.clearPreviousState()
+
+    # ask agent for action
+    def getAction(self, obs):
+        state, actionMask = self.processObservation(obs) # process info
+        state = self._arr_to_tensor(state).view(1, -1)
+
+        self.storeExperience(state) # store experience tuple if the rest of the tuple is present
+
+        action = self.baseAgent.getAction(obs) # ask agent for action
+
+        if self.baseAgent.learningActive: # learn if we want to
+            self.previousState = state # store our own experience
+            self.previousAction = action
+            self.previousActionMask = actionMask
+
+        return action
+
+    # store previous reward
+    def storeReward(self, reward, done):
+        self.previousReward = reward
+        self.previousDone = done
+        if done: # this is a terminal action and we need to store it because newState will not be provided
+            self.storeExperience(self.previousState) # provided value is arbitrary besides dimension
+
+    # store new state, which should complete most recent experience tuple
+    def storeExperience(self, newState):
+        if self.previousState is not None and self.previousReward is not None: # send to base agent
+            self.baseAgent.addToBuffer(
+                (self.previousState,
+                self.previousAction,
+                self.previousActionMask,
+                self.previousReward,
+                newState,
+                self.previousDone) )

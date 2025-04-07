@@ -3,7 +3,16 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 # plot function
-def plotCurves(arr_list, legend_list, color_list, x_values = [], upper_bound = [], upper_bound_label: str = 'Upper Bound', xlabel: str = '', ylabel: str = ''):
+def plotCurves(arr_list,
+               legend_list,
+               color_list,
+               x_values = [],
+               upper_bound = [],
+               upper_bound_label: str = 'Upper Bound',
+               xlabel: str = '',
+               ylabel: str = '',
+               show: bool = True,
+               filename: str = None):
     """
     Args:
         arr_list (list): list of results arrays to plot
@@ -25,7 +34,6 @@ def plotCurves(arr_list, legend_list, color_list, x_values = [], upper_bound = [
     #     upper_bound = np.array(upper_bound)
 
     # set the figure type
-    # plt.clf()
     fig, ax = plt.subplots(figsize=(12, 8))
     
     # set labels
@@ -55,22 +63,30 @@ def plotCurves(arr_list, legend_list, color_list, x_values = [], upper_bound = [
         h_list.append(h)
     
     # plot legends
-    ax.legend(handles=h_list)  
-    plt.show()
+    ax.legend(handles=h_list)
+
+    # write to file if desired
+    if filename is not None:
+        plt.savefig(filename)
+
+    # show if desired
+    if show:
+        plt.show()
+    else:
+        plt.clf()
 
 # plot, but autogenerate agent names and colors
 def plotCurvesAutolabel(arr_list, **kwargs):
     numPlayers = len(arr_list)
     plotColors = ['r','g','b','k','y','c']
     plotCurves(arr_list, ['Agent %d'%i for i in range(numPlayers)], plotColors[:numPlayers], **kwargs)
-    # TODO this should be able to infer numPlayers
 
 # plot scores vs. round for each agent
-def plotAgentScores(scores):
+def plotAgentScores(scores, **kwargs):
     numPlayers = len(scores)
     roundNumbers = range(1, 60 // numPlayers + 1)
     expectedScores = [20 + 10 * (round / (0.0 + numPlayers)) for round in roundNumbers]
-    plotCurvesAutolabel(scores, x_values=roundNumbers, xlabel='Round', ylabel='Score', upper_bound=expectedScores, upper_bound_label='Nominal')
+    plotCurvesAutolabel(scores, x_values=roundNumbers, xlabel='Round', ylabel='Score', upper_bound=expectedScores, upper_bound_label='Nominal', **kwargs)
 
 # trim all dimensions of an n-dimensional list
 def trimDims(L):
@@ -80,3 +96,18 @@ def trimDims(L):
             L = [l[:minLen] for l in L]
         L = [trimDims(l) for l in L]
     return L
+
+# plot training returns
+def plotTrainingReturns(train_returns, **kwargs):
+    train_returns_trimmed = trimDims(train_returns) # trim to consistent dimensions
+    train_returns_trimmed = np.array(train_returns_trimmed) # cast to numpy array
+    train_returns_trimmed = np.transpose(train_returns_trimmed, (0,2,1,3)) # [run][game][player][hand] -> [run][player][game][hand]
+    train_returns_trimmed = train_returns_trimmed.reshape((-1,) + train_returns_trimmed.shape[2:]) # flatten run and agent to one dimension
+    plotAgentScores(train_returns_trimmed, **kwargs)
+
+# plot training losses
+def plotTrainingLosses(train_losses, **kwargs):
+    train_losses_trimmed = trimDims(train_losses) # trim to consistent dimensions
+    train_losses_trimmed = np.array(train_losses_trimmed) # cast to numpy array
+    train_losses_trimmed = np.transpose(train_losses_trimmed, (1,0,2)) # [run][player][hand] -> [player][run][hand]
+    plotCurvesAutolabel(train_losses_trimmed, xlabel='Training Step', ylabel='MSE Loss', **kwargs)

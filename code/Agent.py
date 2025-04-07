@@ -200,16 +200,16 @@ class NNAgent(Agent):
     def storeExperience(self, newState):
         if self.previousState is not None and self.previousReward is not None:
             self.addToBuffer(
-                (self.previousState,
+                self.previousState,
                 self.previousAction,
                 self.previousActionMask,
                 self.previousReward,
                 newState,
-                self.previousDone) )
+                self.previousDone )
 
     # add experience to buffer
-    def addToBuffer(self, experienceTuple):
-        self.buffer.add(experienceTuple)
+    def addToBuffer(self, s, a, am, r, sp, d):
+        self.buffer.add(s, a, am, r, sp, d)
         self.checkLearning()
 
     # consider updating the neural nets

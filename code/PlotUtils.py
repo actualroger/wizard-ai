@@ -12,7 +12,8 @@ def plotCurves(arr_list,
                xlabel: str = '',
                ylabel: str = '',
                show: bool = True,
-               filename: str = None):
+               filename: str = None,
+               keepDims: int = None):
     """
     Args:
         arr_list (list): list of results arrays to plot
@@ -30,6 +31,9 @@ def plotCurves(arr_list,
     # cast input if necessary
     if isinstance(arr_list, list):
         arr_list = np.array(arr_list)
+    if keepDims is not None: # collapse dimensions in input
+        arr_list = np.reshape(arr_list, (-1,) + arr_list.shape[-keepDims:])
+
     # if isinstance(upper_bound, list):
     #     upper_bound = np.array(upper_bound)
 
@@ -111,3 +115,5 @@ def plotTrainingLosses(train_losses, **kwargs):
     train_losses_trimmed = np.array(train_losses_trimmed) # cast to numpy array
     train_losses_trimmed = np.transpose(train_losses_trimmed, (1,0,2)) # [run][player][hand] -> [player][run][hand]
     plotCurvesAutolabel(train_losses_trimmed, xlabel='Training Step', ylabel='MSE Loss', **kwargs)
+
+# TODO plotting pooled agents does not work properly - maybe completely remove the separation of agents?

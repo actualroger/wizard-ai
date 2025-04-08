@@ -25,7 +25,7 @@ def trainAgents(env, params):
     else:
         agents = [agentClass(env, params) for _ in range(numAgents)]
 
-    # TODO fill buffer with random agent data?
+    # TODO fill buffer with random agent data
     # if 'buffer_prefill_size' in params: # check pooling?
     #     prefillBuffer(agents, params['buffer_prefill_size'])
 
@@ -104,7 +104,7 @@ def trainAgentFromParams(settingsFile):
     try:
         train_returns, train_losses, train_lengths = trainAgentsMultipleTimes(params)
     except Exception as e:
-        print("Failure during training")
+        print("\nFailure during training")
         print(e)
         return
 
@@ -113,8 +113,12 @@ def trainAgentFromParams(settingsFile):
         json.dump({'train_returns' : train_returns, 'train_losses' : train_losses, 'train_lengths' : train_lengths}, f)
 
     # generate plots
-    plotTrainingReturns(train_returns, show=False, filename=os.path.join(absFolder, 'training_returns.png'))
-    plotTrainingLosses(train_losses, show=False, filename=os.path.join(absFolder, 'training_losses.png'))
+    if params['pooled']:
+        keepDims = 2
+    else:
+        keepDims = None
+    plotTrainingReturns(train_returns, show=False, filename=os.path.join(absFolder, 'training_returns.png'), keepDims=keepDims)
+    plotTrainingLosses(train_losses, show=False, filename=os.path.join(absFolder, 'training_losses.png'), keepDims=keepDims)
 
 if __name__ == '__main__':
     for s in sys.argv[1:]:

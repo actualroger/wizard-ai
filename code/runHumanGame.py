@@ -17,8 +17,8 @@ dealer = 0
 
 scores = [0] * numPlayers
 
-random.seed(seed=seed)
-np.random.seed(seed)
+random.seed(seed)
+np.random.seed(seed=seed)
 
 env = WizardEnvironment.env(renderMode="ansi", numPlayers=numPlayers, verbosity=verbosity)
 agents = [HumanAgent(env) for _ in range(numHumans)] + [RandomAgent(env, verbosity=verbosity) for _ in range(numPlayers - numHumans)]
@@ -43,4 +43,4 @@ for round in range(startRound, endRound + 1):
     print("End of round scores:", scores, "\n")
 
 print("\nEnd of game")
-env.close() # end of game
+# env.close() # end of game

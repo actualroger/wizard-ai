@@ -31,7 +31,7 @@ def rolloutRound(env, agents, round, dealer: int = 0, verbosity: int = 0):
 	
 	if verbosity > 0:
 		print("End of round scores:", scores, "\n")
-	return scores, length
+	return [int(s) for s in scores], length
 
 # roll out one game for the given agents
 def rolloutGame(env, agents, minRound: int = 1, maxRound: int = -1, dealer: int = 0, verbosity: int = 0):

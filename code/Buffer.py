@@ -5,6 +5,8 @@ import numpy as np
 class Buffer(object):
     def __init__(self, size):
         self.total_size = size
+        # create an rng object and link its seed to the global seed
+        self.rng = np.random.default_rng(np.random.randint(1e9))
 
     def add(self, tuple):
         raise NotImplementedError("Buffer subclass must implement add(tuple)")
@@ -12,6 +14,7 @@ class Buffer(object):
     def sampleBatch(self, batch_size):
         raise NotImplementedError("Buffer subclass must implement sample_batch(batch_size)")
 
+# standard replay buffer built on circular array
 class ReplayBuffer(Buffer):
     """ Implement the Replay Buffer as a class, which contains:
             - self._data_buffer (list): a list variable to store all transition tuples.
@@ -59,12 +62,7 @@ class ReplayBuffer(Buffer):
             # get the single transition
             data = self._data_buffer[idx]
             obs, act, actMask, reward, next_obs, d = data
-            # store to the list
-            # obs_list.append(np.array(obs, copy=False))
-            # actions_list.append(np.array(act, copy=False))
-            # rewards_list.append(np.array(reward, copy=False))
-            # next_obs_list.append(np.array(next_obs, copy=False))
-            # dones_list.append(np.array(d, copy=False))
+            # convert to np arrays
             obs_list.append(np.asarray(obs))
             actions_list.append(np.asarray(act))
             action_masks_list.append(np.asarray(actMask))
@@ -79,9 +77,58 @@ class ReplayBuffer(Buffer):
         """ Args:
                 batch_size (int): size of the sampled batch data.
         """
-        # sample indices with replaced
-        indices = [np.random.randint(0, len(self._data_buffer)) for _ in range(batch_size)]
+        # sample indices with replacement
+        indices = self.rng.choice(len(self._data_buffer), size=batch_size, replace=False, shuffle=False)
         return self._encode_sample(indices)
 
-# TODO implement priority buffer
-# TODO implement deque buffer?
+# replay buffer with additional priority list used to select items
+class PriorityBuffer(ReplayBuffer):
+    # constructor
+    def __init__(self, buffer_size, params):
+        super().__init__(buffer_size)
+        self.params = params
+        self._weights = []
+        self._total_weight = 0
+        self.prev_weights = [] # for reference during loss calculation
+
+    # calculate and add weight
+    def add(self, *args):
+        super().add(*args) # this increments self._next_idx
+        next_idx = self.__len__() - 1 if self._next_idx == 0 else self._next_idx - 1
+
+        weight = self.priorityFunction(self._data_buffer[next_idx])
+
+        # interesting implementation
+        if next_idx >= len(self._weights):
+            self._weights.append(weight)
+            self._total_weight += weight
+        else:
+            self._total_weight += weight - self._weights[next_idx]
+            self._weights[next_idx] = weight
+
+    def sampleBatch(self, batch_size):
+        """ Args:
+                batch_size (int): size of the sampled batch data.
+        """
+        # sample indices with replacement
+        indices = self.rng.choice(len(self._data_buffer),
+                                  size=batch_size,
+                                  p=[w / self._total_weight for w in self._weights],
+                                  replace=False,
+                                  shuffle=False)
+        self.prev_weights = [self._weights[i] for i in indices]
+        return self._encode_sample(indices)
+
+    def priorityFunction(self, transition) -> float:
+        raise NotImplementedError("Subclass of PriorityBuffer must implement priorityFunction(self, transition) -> float")
+
+# replay buffer which prioritizes by action index
+class ActionPriorityBuffer(PriorityBuffer):
+    # constructor
+    def __init__(self, *args):
+        super().__init__(*args)
+
+    # prioritize by action
+    def priorityFunction(self, transition):
+        action = transition[1]
+        return 1.0 if action in range(60) else (action - 56) * 0.5 if action in range(60, 81) else 10 if action in range(81, 85) else 1

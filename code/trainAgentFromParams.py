@@ -6,12 +6,13 @@ import random
 import torch
 from tqdm import tqdm
 import os.path
+import traceback
 
 import WizardEnvironment
 from PlotUtils import *
 from RolloutUtils import rolloutGame
 
-from DQNAgent import DQNAgent
+from DQNAgent import *
 from Agent import *
 
 # train a number of individual agents
@@ -93,8 +94,8 @@ def trainAgentFromParams(settingsFile):
     with open(absFile, 'r') as f:
         try:
             params = json.load(f)
-        except Exception as e:
-            print(e)
+        except Exception:
+            print(traceback.format_exc())
     if len(params) == 0:
         print('Params not found')
         return
@@ -103,22 +104,30 @@ def trainAgentFromParams(settingsFile):
     # train agents
     try:
         train_returns, train_losses, train_lengths = trainAgentsMultipleTimes(params)
-    except Exception as e:
+    except Exception:
         print("\nFailure during training")
-        print(e)
+        print(traceback.format_exc())
         return
 
     # write result vectors
-    with open(os.path.join(absFolder, 'training_results.json'), 'w') as f:
-        json.dump({'train_returns' : train_returns, 'train_losses' : train_losses, 'train_lengths' : train_lengths}, f)
+    try:
+        with open(os.path.join(absFolder, 'training_results.json'), 'w') as f:
+            json.dump({'train_returns' : train_returns, 'train_losses' : train_losses, 'train_lengths' : train_lengths}, f)
+    except Exception:
+        print("\nFailure during writing")
+        print(traceback.format_exc())
 
     # generate plots
-    if params['pooled']:
-        keepDims = 2
-    else:
-        keepDims = None
-    plotTrainingReturns(train_returns, show=False, filename=os.path.join(absFolder, 'training_returns.png'), keepDims=keepDims)
-    plotTrainingLosses(train_losses, show=False, filename=os.path.join(absFolder, 'training_losses.png'), keepDims=keepDims)
+    try:
+        if False: #params['pooled']: # TODO FIX
+            keepDims = 2
+        else:
+            keepDims = None
+        plotTrainingReturns(train_returns, show=False, filename=os.path.join(absFolder, 'training_returns.png'), keepDims=keepDims)
+        plotTrainingLosses(train_losses, show=False, filename=os.path.join(absFolder, 'training_losses.png'), keepDims=keepDims)
+    except Exception:
+        print("\nFailure during plotting")
+        print(traceback.format_exc())
 
 if __name__ == '__main__':
     for s in sys.argv[1:]:
@@ -132,3 +141,5 @@ if __name__ == '__main__':
 # load state dict from json
 # with open('agent.json', 'r') as f:
 #     self.behaviorPolicyNet.load_state_dict(json.load(f))
+
+# TODO plot 500k and 500k_pooled

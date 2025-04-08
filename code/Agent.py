@@ -57,6 +57,8 @@ class NNAgent(Agent):
             match params['buffer_type']:
                 case 'replay':
                     self.buffer = Buffer.ReplayBuffer(params['replay_buffer_size'])
+                case 'action_priority':
+                    self.buffer = Buffer.ActionPriorityBuffer(params['replay_buffer_size'], params)
                 case _:
                     raise RuntimeError("No buffer provided")
         else:
@@ -219,6 +221,19 @@ class NNAgent(Agent):
                 self.trainingLosses.append(self.updateBehaviorPolicy(self.buffer.sampleBatch(self.batchSize)))
             if not np.mod(self.timestep, self.freqUpdateTargetPolicy): # hard update target policy
                 self.updateTargetPolicy()
+
+    # evaluate loss function
+    def evaluateLoss(self, q_behavior, q_target):
+        baseLoss = self.lossFunction(q_behavior, q_target)
+
+        # apply weighting if necessary
+        match self.params['buffer_type']:
+            case 'action_priority':
+                loss = (torch.tensor(self.buffer.prev_weights) * baseLoss).mean()
+            case _:
+                loss = baseLoss
+
+        return loss
 
     # auxiliary functions
     def _arr_to_tensor(self, arr):

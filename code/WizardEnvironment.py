@@ -86,7 +86,7 @@ class env():
 		self.playPhase = Phase.BET
 		self.setTrump() # sets trump or enters that phase of play
 
-		self.bets = [[] for i in range(self.numPlayers)] # bet tricks
+		self.bets = [None for _ in range(self.numPlayers)] # bet tricks
 		self.wins = [0] * self.numPlayers # won tricks
 		self.previousPiles = [] # played cards
 		self.ledSuit = Suit.NONE # which suit was led
@@ -202,6 +202,10 @@ class env():
 		truncation = False
 		info = {}
 		
+		# debug print
+		if self.verbosity > 1:
+			print('Agent %d takes action %d'%(agent, act))
+
 		# check if valid
 		if "actionMask" not in self.agentObservation[agent] or not self.agentObservation[agent]["actionMask"][act]:
 			print('Agent %d tried to take invalid action %d\n'%(agent, act))
@@ -296,7 +300,7 @@ class env():
 			self.playPhase = Phase.TERMINAL
 			if self.verbosity > 0:
 				print("Entering Terminal")
-		elif self.playPhase == Phase.BET and all([isinstance(a, int) for a in self.bets]): # everyone has bet
+		elif self.playPhase == Phase.BET and all([a is not None for a in self.bets]): # everyone has bet
 			self.leader = self.currentAgent
 			self.playPhase = Phase.PLAY
 			if self.verbosity > 0:

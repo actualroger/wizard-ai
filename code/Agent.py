@@ -251,8 +251,8 @@ class PassThroughAgent(NNAgent):
 
     # ask agent for action
     def getAction(self, obs):
-        state, actionMask = self.processObservation(obs) # process info
-        state = self._arr_to_tensor(state).view(1, -1)
+        state, actionMask = self.baseAgent.processObservation(obs) # process info
+        state = self.baseAgent._arr_to_tensor(state).view(1, -1)
 
         self.storeExperience(state) # store experience tuple if the rest of the tuple is present
 
@@ -276,9 +276,9 @@ class PassThroughAgent(NNAgent):
     def storeExperience(self, newState):
         if self.previousState is not None and self.previousReward is not None: # send to base agent
             self.baseAgent.addToBuffer(
-                (self.previousState,
+                self.previousState,
                 self.previousAction,
                 self.previousActionMask,
                 self.previousReward,
                 newState,
-                self.previousDone) )
+                self.previousDone)

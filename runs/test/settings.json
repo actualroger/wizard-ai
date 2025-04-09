@@ -1,20 +1,23 @@
 {
     "model_name": "DQN_2x64_500k",
     "seed": 0,
-    "num_runs": 1,
+    "num_runs": 2,
     "device": "cpu",
 
-    "agent_type": "DQNAgent",
+    "agent_type": "ConvDQNAgent",
     "num_agents": 4,
     "pooled": false,
 
     "observation_dim": 65,
     "action_dim": 86,
+    "conv_layer_num": 3,
+    "conv_channel_num": 5,
+    "conv_kernel_size": 5,
     "hidden_layer_num": 2,
     "hidden_layer_dim": 64,
     "gamma": 1,
 
-    "total_training_time_step": 50000,
+    "total_training_time_step": 5000,
 
     "schedule_type": "linear",
     "epsilon_start_value": 1.0,

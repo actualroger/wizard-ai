@@ -5,6 +5,14 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Python Debugger: plot results",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "./code/replotResults.py",
+            "console": "integratedTerminal",
+            "args": "./runs/DQN_2x64_500k/"
+        },
+        {
             "name": "Python Debugger: train agent on test json",
             "type": "debugpy",
             "request": "launch",

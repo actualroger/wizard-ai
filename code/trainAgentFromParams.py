@@ -16,7 +16,7 @@ from DQNAgent import *
 from Agent import *
 
 # train a number of individual agents
-def trainAgents(env, params):
+def trainAgents(env, params, saveAgent: bool = False):
     # create the agents
     numAgents = params['num_agents']
     agentClass = getattr(sys.modules[__name__], params['agent_type'])
@@ -33,6 +33,7 @@ def trainAgents(env, params):
     # training variables
     train_returns = []
     train_lengths = []
+    total_scores = [0] * numAgents # total score for each agent
 
     # start training
     total_length = 0
@@ -45,6 +46,9 @@ def trainAgents(env, params):
         pbar.update(length)
 
         train_returns.append(scores)
+        if total_length > params['total_training_time_step'] * 0.9: # more than 90% through
+            for a in range(numAgents):
+                total_scores[a] += sum(scores[a])
 
     if params['pooled']:
         train_losses = [baseAgent.trainingLosses]
@@ -53,10 +57,17 @@ def trainAgents(env, params):
 
     pbar.close()
 
-    # TODO print agent to json
-    # check if pooled. take best?
-    # with open('agent.json', 'w') as f:
-    #     json.dump(agent.behaviorPolicyNet.state_dict())
+    # print best agent to json
+    if saveAgent:
+        if params['pooled']:
+            bestAgent = baseAgent
+        else:
+            bestAgent = agents[np.argmax(total_scores)]
+        try:
+            torch.save(bestAgent.behaviorPolicyNet.state_dict(), f"./runs/{params['model_name']}")
+        except Exception:
+            print('Failed to write agent')
+            print(traceback.format_exc)
 
     # save the results
     return train_returns, train_losses, train_lengths
@@ -76,8 +87,8 @@ def trainAgentsMultipleTimes(params):
     train_returns = []
     train_losses = []
     train_lengths = []
-    for _ in range(params['num_runs']):
-        tr, tl, tll = trainAgents(my_env, params)
+    for i in range(params['num_runs']):
+        tr, tl, tll = trainAgents(my_env, params, saveAgent=(i==0))
         train_returns.append(tr)
         train_losses.append(tl)
         train_lengths.append(tll)
@@ -119,12 +130,8 @@ def trainAgentFromParams(settingsFile):
 
     # generate plots
     try:
-        if False: #params['pooled']: # TODO FIX
-            keepDims = 2
-        else:
-            keepDims = None
-        plotTrainingReturns(train_returns, show=False, filename=os.path.join(absFolder, 'training_returns.png'), keepDims=keepDims)
-        plotTrainingLosses(train_losses, show=False, filename=os.path.join(absFolder, 'training_losses.png'), keepDims=keepDims)
+        plotTrainingReturns(train_returns, show=False, filename=os.path.join(absFolder, 'training_returns.png'))
+        plotTrainingLosses(train_losses, show=False, filename=os.path.join(absFolder, 'training_losses.png'))
     except Exception:
         print("\nFailure during plotting")
         print(traceback.format_exc())

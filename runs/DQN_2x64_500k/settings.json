@@ -1,7 +1,7 @@
 {
     "model_name": "DQN_2x64_500k",
     "seed": 0,
-    "num_runs": 1,
+    "num_runs": 10,
     "device": "cpu",
 
     "agent_type": "DQNAgent",

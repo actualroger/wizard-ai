@@ -11,20 +11,13 @@ import traceback
 import WizardEnvironment
 from PlotUtils import *
 from RolloutUtils import rolloutGame
-
-from DQNAgent import *
-from Agent import *
+from AgentUtils import constructAgentsFromParams
 
 # train a number of individual agents
 def trainAgents(env, params):
     # create the agents
     numAgents = params['num_agents']
-    agentClass = getattr(sys.modules[__name__], params['agent_type'])
-    if params['pooled']:
-        baseAgent = agentClass(env, params)
-        agents = [PassThroughAgent(baseAgent) for _ in range(numAgents)]
-    else:
-        agents = [agentClass(env, params) for _ in range(numAgents)]
+    agents, baseAgent = constructAgentsFromParams(env, params)
 
     # TODO fill buffer with random agent data
     # if 'buffer_prefill_size' in params: # check pooling?
@@ -112,7 +105,6 @@ def trainAgentFromParams(settingsFile):
     if len(params) == 0:
         print('Params not found')
         return
-    # print(params)
 
     # train agents
     try:
@@ -148,12 +140,3 @@ def trainAgentFromParams(settingsFile):
 if __name__ == '__main__':
     for s in sys.argv[1:]:
         trainAgentFromParams(s)
-
-# TODO
-# to load agent from run:
-# load params, check for agent type
-# construct agent of type
-# turn off learning, epsilon(?)
-# load state dict from json
-# with open('agent.json', 'r') as f:
-#     self.behaviorPolicyNet.load_state_dict(json.load(f))

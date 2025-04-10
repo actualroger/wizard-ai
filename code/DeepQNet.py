@@ -22,7 +22,12 @@ def customized_weights_init(m):
         nn.init.xavier_uniform_(m.weight, gain=gain)
         nn.init.constant_(m.bias, 0)
 
-class DeepQNet(nn.Module):
+class Qnet(nn.Module):
+    # constructor
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+class DeepQNet(Qnet):
     def __init__(self, params):
         super(DeepQNet, self).__init__()
 
@@ -44,7 +49,7 @@ class DeepQNet(nn.Module):
     def forward(self, x):
         return self.linear_relu_stack(x)
 
-class ConvDeepQNet(nn.Module):
+class ConvDeepQNet(Qnet):
     def __init__(self, params):
         super(ConvDeepQNet, self).__init__()
 

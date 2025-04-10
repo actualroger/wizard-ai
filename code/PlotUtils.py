@@ -13,7 +13,8 @@ def plotCurves(arr_list,
                xlabel: str = '',
                ylabel: str = '',
                show: bool = True,
-               filename: str = None):
+               filename: str = None,
+               max_plot_length: int = 10000):
     """
     Args:
         arr_list (list): list of results arrays to plot
@@ -47,16 +48,25 @@ def plotCurves(arr_list,
     # plot results
     h_list = []
     for arr, legend, color in zip(arr_list, legend_list, color_list):
+        # trim size if necessary
+        originalLength = arr.shape[1]
+        if originalLength > max_plot_length:
+            arr = bin_data(arr, max_plot_length, 1)
+        # infer x values
         x_data = range(arr.shape[1]) if len(x_values) == 0 else x_values
+        x_data = [x * originalLength / arr.shape[1] for x in x_data] # account for binning
         # compute the standard error
         arr_err = arr.std(axis=0) / np.sqrt(arr.shape[0])
         # plot the mean
-        h, = ax.plot(x_data, arr.mean(axis=0), color=color, label=legend)
+        meanData = arr.mean(axis=0)
+        h, = ax.plot(x_data, meanData, color=color, label=legend, alpha=0.3)
         # plot the confidence band
         arr_err = 1.96 * arr_err
-        ax.fill_between(x_data, arr.mean(axis=0) - arr_err, arr.mean(axis=0) + arr_err, alpha=0.3, color=color)
+        ax.fill_between(x_data, meanData - arr_err, meanData + arr_err, alpha=0.2, color=color)
         # save the plot handle
-        h_list.append(h) 
+        h_list.append(h)
+        # plot smoothed result
+        h, = ax.plot(x_data, moving_average(meanData), color=color, alpha=1.0)
     
     # plot the upper bound
     if len(upper_bound) > 0:
@@ -90,33 +100,6 @@ def plotAgentScores(scores, **kwargs):
     expectedScores = [20 + 10 * (round / (0.0 + numPlayers)) for round in roundNumbers]
     plotCurvesAutolabel(scores, x_values=roundNumbers, xlabel='Round', ylabel='Score', upper_bound=expectedScores, upper_bound_label='Nominal', **kwargs)
 
-# trim all dimensions of an n-dimensional list
-def trimDims(L):
-    # returns a list [[a], [b,c], [d,e,f,g]] of the lengths of elements by depth
-    def getLengthTree(lst):
-        if isinstance(lst, list): # if this is a list
-            thisLengths = [[len(lst)]]
-            if len(lst) > 0 and isinstance(lst[0], list): # recurse if necessary
-                for el in lst:
-                    subLengths = getLengthTree(el)
-                    for j in range(len(subLengths)):
-                        if j + 1 >= len(thisLengths):
-                            thisLengths.append(subLengths[j]) # extend tree
-                        else:
-                            thisLengths[j + 1].extend(subLengths[j]) # merge into tree
-            return thisLengths
-        return [[1]]  # not a list
-
-    treeLengths = getLengthTree(L)
-    treeLengths = [min(d) for d in treeLengths] # minimum of each length by depth
-
-    def trimDimension(lst, treeLengths, depth=0):
-        if depth >= len(treeLengths):
-            return lst
-        return [trimDimension(el, treeLengths, depth+1) for el in lst[:treeLengths[depth]]]
-
-    return trimDimension(L, treeLengths)
-
 # plot training losses
 def plotTrainingLosses(train_losses, **kwargs):
     train_losses_trimmed = trimDims(train_losses) # trim to consistent dimensions
@@ -133,7 +116,7 @@ def plotCurvesSequence(arr_list,
                ylabel: str = '',
                show: bool = True,
                filename: str = None,
-               runSmoothing: int = 50):
+               numRunGroups: int = 50):
 
     # cast input if necessary
     if isinstance(arr_list, list):
@@ -153,6 +136,7 @@ def plotCurvesSequence(arr_list,
     for arr in arr_list:
         x_data = range(arr.shape[1]) if len(x_values) == 0 else x_values
         numRuns = arr.shape[0]
+        runSmoothing = numRuns // numRunGroups
         colors = plt.cm.jet(np.linspace(0,1,numRuns))
         for run in range(runSmoothing, numRuns+runSmoothing, runSmoothing):
             plt.plot(x_data, arr[max(0, run-runSmoothing):run].mean(axis=0), color=colors[run-runSmoothing])
@@ -191,3 +175,60 @@ def plotTrainingReturns(train_returns, **kwargs):
     roundNumbers = range(1, 60 // numPlayers + 1)
     expectedScores = [20 + 10 * (round / (0.0 + numPlayers)) for round in roundNumbers]
     plotCurvesSequence(train_returns_trimmed, x_values=roundNumbers, xlabel='Round', ylabel='Score', upper_bound=expectedScores, upper_bound_label='Nominal', **kwargs)
+
+## UTIL FUNCTIONS
+
+# trim all dimensions of an n-dimensional list
+def trimDims(L):
+    # returns a list [[a], [b,c], [d,e,f,g]] of the lengths of elements by depth
+    def getLengthTree(lst):
+        if isinstance(lst, list): # if this is a list
+            thisLengths = [[len(lst)]]
+            if len(lst) > 0 and isinstance(lst[0], list): # recurse if necessary
+                for el in lst:
+                    subLengths = getLengthTree(el)
+                    for j in range(len(subLengths)):
+                        if j + 1 >= len(thisLengths):
+                            thisLengths.append(subLengths[j]) # extend tree
+                        else:
+                            thisLengths[j + 1].extend(subLengths[j]) # merge into tree
+            return thisLengths
+        return [[1]]  # not a list
+
+    treeLengths = getLengthTree(L)
+    treeLengths = [min(d) for d in treeLengths] # minimum of each length by depth
+
+    def trimDimension(lst, treeLengths, depth=0):
+        if depth >= len(treeLengths):
+            return lst
+        return [trimDimension(el, treeLengths, depth+1) for el in lst[:treeLengths[depth]]]
+
+    return trimDimension(L, treeLengths)
+
+# bins data into N groups along dimension
+def bin_data(data: np.array, numGroups, dim: int = 0):
+    dataLength = data.shape[dim]
+    groupLength = dataLength // numGroups
+    newData = np.array( # return np.array
+        [np.mean( # mean of each window
+            np.take(data, range(s,min(s+groupLength, dataLength)), dim), axis=dim) # slice window in dimension
+        for s in range(0, dataLength, groupLength)] # for each slice
+        )
+    return np.moveaxis(newData, 0, dim) # move dim back where it was
+
+def moving_average(data, *, window_size = 50):
+    """Smooths 1-D data array using a moving average.
+
+    Args:
+        data: 1-D numpy.array
+        window_size: Size of the smoothing window
+
+    Returns:
+        smooth_data: A 1-d numpy.array with the same size as data
+    """
+    assert data.ndim == 1
+    kernel = np.ones(window_size)
+    smooth_data = np.convolve(data, kernel) / np.convolve(
+        np.ones_like(data), kernel
+    )
+    return smooth_data[: -window_size + 1]

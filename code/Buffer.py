@@ -131,4 +131,7 @@ class ActionPriorityBuffer(PriorityBuffer):
     # prioritize by action
     def priorityFunction(self, transition):
         action = transition[1]
-        return 1.0 if action in range(60) else (action - 56) * 0.5 if action in range(60, 81) else 10 if action in range(81, 85) else 1
+        return (1.0 if action in range(60) else # normal card playment = 1
+            (action - 56) * 0.5 if action in range(60, 81) else # betting = 2-10
+            10 if action in range(81, 85) else # trump = 10
+            1) # points = 1

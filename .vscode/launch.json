@@ -10,7 +10,7 @@
             "request": "launch",
             "program": "./code/replotResults.py",
             "console": "integratedTerminal",
-            "args": "./runs/DQN_2x64_500k/"
+            "args": "./runs/test/"
         },
         {
             "name": "Python Debugger: train agent on test json",

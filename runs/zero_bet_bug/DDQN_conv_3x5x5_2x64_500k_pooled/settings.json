@@ -1,0 +1,38 @@
+{
+    "model_name": "DDQN_conv_3x5x5_2x64_500k_pooled",
+    "seed": 0,
+    "num_runs": 10,
+    "device": "cpu",
+
+    "agent_type": "DDQNAgent",
+    "qnet_type": "ConvDeepQNet",
+    "num_agents": 4,
+    "pooled": true,
+
+    "observation_dim": 65,
+    "action_dim": 86,
+    "conv_layer_num": 3,
+    "conv_channel_num": 5,
+    "conv_kernel_size": 5,
+    "hidden_layer_num": 2,
+    "hidden_layer_dim": 64,
+    "gamma": 1,
+
+    "total_training_time_step": 500000,
+
+    "schedule_type": "linear",
+    "epsilon_start_value": 1.0,
+    "epsilon_end_value": 0.01,
+    "epsilon_duration": 250000,
+
+    "buffer_type": "replay",
+    "replay_buffer_size": 50000,
+    "start_training_step": 2000,
+    "freq_update_behavior_policy": 4,
+    "freq_update_target_policy": 2000,
+
+    "optimizer": "Adam",
+    "loss": "MSELoss",
+    "batch_size": 32,
+    "learning_rate": 1e-3
+}

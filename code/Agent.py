@@ -170,6 +170,28 @@ class NNAgent(Agent):
     def updateBehaviorPolicy(self, batch_data) -> float:
         raise NotImplementedError("NNAgent subclass must implement updateBehaviorPolicy(batch_data) -> float")
 
+    # evaluate behavior network
+    def evaluateBehaviorNetwork(self, batch_data_tensor):
+        raise NotImplementedError("NNAgent subclass must implement evaluateBehaviorNetwork(batch_data_tensor) -> tensor")
+
+    # evaluate target network
+    def evaluateTargetNetwork(self, batch_data_tensor):
+        raise NotImplementedError("NNAgent subclass must implement evaluateTargetNetwork(batch_data_tensor) -> tensor")
+
+    # evaluate loss function
+    def evaluateLoss(self, q_behavior, q_target):
+        baseLoss = self.lossFunction(q_behavior, q_target)
+
+        # apply weighting if necessary
+        # aping https://github.com/rlcode/per/blob/master/cartpole_per.py not sure if correct
+        match self.params['buffer_type']:
+            case 'action_priority':
+                loss = (torch.tensor(self.buffer.prev_weights) * baseLoss).mean()
+            case _:
+                loss = baseLoss
+
+        return loss
+
     # update target policy
     def updateTargetPolicy(self):
         # hard update
@@ -221,20 +243,6 @@ class NNAgent(Agent):
                 self.trainingLosses.append(self.updateBehaviorPolicy(self.buffer.sampleBatch(self.batchSize)))
             if not np.mod(self.timestep, self.freqUpdateTargetPolicy): # hard update target policy
                 self.updateTargetPolicy()
-
-    # evaluate loss function
-    def evaluateLoss(self, q_behavior, q_target):
-        baseLoss = self.lossFunction(q_behavior, q_target)
-
-        # apply weighting if necessary
-        # aping https://github.com/rlcode/per/blob/master/cartpole_per.py not sure if correct
-        match self.params['buffer_type']:
-            case 'action_priority':
-                loss = (torch.tensor(self.buffer.prev_weights) * baseLoss).mean()
-            case _:
-                loss = baseLoss
-
-        return loss
 
     # auxiliary functions
     def _arr_to_tensor(self, arr):

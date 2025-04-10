@@ -4,7 +4,8 @@
     "num_runs": 2,
     "device": "cpu",
 
-    "agent_type": "ConvDQNAgent",
+    "agent_type": "DQNAgent",
+    "qnet_type": "ConvDeepQNet",
     "num_agents": 4,
     "pooled": false,
 

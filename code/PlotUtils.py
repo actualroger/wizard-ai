@@ -136,7 +136,7 @@ def plotCurvesSequence(arr_list,
     for arr in arr_list:
         x_data = range(arr.shape[1]) if len(x_values) == 0 else x_values
         numRuns = arr.shape[0]
-        runSmoothing = numRuns // numRunGroups
+        runSmoothing = max(numRuns // numRunGroups, 1)
         colors = plt.cm.jet(np.linspace(0,1,numRuns))
         for run in range(runSmoothing, numRuns+runSmoothing, runSmoothing):
             plt.plot(x_data, arr[max(0, run-runSmoothing):run].mean(axis=0), color=colors[run-runSmoothing])
@@ -208,7 +208,7 @@ def trimDims(L):
 # bins data into N groups along dimension
 def bin_data(data: np.array, numGroups, dim: int = 0):
     dataLength = data.shape[dim]
-    groupLength = dataLength // numGroups
+    groupLength = max(dataLength // numGroups, 1)
     newData = np.array( # return np.array
         [np.mean( # mean of each window
             np.take(data, range(s,min(s+groupLength, dataLength)), dim), axis=dim) # slice window in dimension
@@ -227,6 +227,8 @@ def moving_average(data, *, window_size = 50):
         smooth_data: A 1-d numpy.array with the same size as data
     """
     assert data.ndim == 1
+    if all([d == 0 for d in data.shape]): # data is empty
+        return data
     kernel = np.ones(window_size)
     smooth_data = np.convolve(data, kernel) / np.convolve(
         np.ones_like(data), kernel

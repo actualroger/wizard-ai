@@ -47,14 +47,8 @@ class DQNAgent(NNAgent):
         actions_tensor = batch_data_tensor['action']
 
         # compute the q value estimation using the behavior network
-        match self.params['qnet_type']:
-            case 'DeepQNet':
-                q_behavior = self.behaviorPolicyNet.forward(obs_tensor).gather(-1, actions_tensor.unsqueeze(-1)).squeeze(-1)
-            case 'ConvDeepQNet': # it is annoying that the output dimensions are different on this one
-                q_behavior = self.behaviorPolicyNet.forward(obs_tensor).gather(-1, actions_tensor)
-            case _: # should throw error, but we shouldn't get here because constructor should crash
-                pass
-        return q_behavior
+        q_behavior = self.behaviorPolicyNet.forward(obs_tensor).gather(-1, actions_tensor)
+        return q_behavior # shape should be [batch_size, 1]
 
     # evaluate target network
     def evaluateTargetNetwork(self, batch_data_tensor):
@@ -65,14 +59,8 @@ class DQNAgent(NNAgent):
 
         # compute the TD target using the target network
         with torch.no_grad():
-            match self.params['qnet_type']:
-                case 'DeepQNet':
-                    q_target = rewards_tensor + self.params['gamma'] * (1 - dones_tensor) * self.targetPolicyNet.forward(next_obs_tensor).max(-1).values
-                case 'ConvDeepQNet': # it is annoying that the output dimensions are different on this one
-                    q_target = rewards_tensor + self.params['gamma'] * (1 - dones_tensor) * self.targetPolicyNet.forward(next_obs_tensor).max(-1).values.unsqueeze(-1)
-                case _: # should throw error, but we shouldn't get here because constructor should crash
-                    pass
-        return q_target
+            q_target = rewards_tensor + self.params['gamma'] * (1 - dones_tensor) * self.targetPolicyNet.forward(next_obs_tensor).max(-1).values.unsqueeze(-1)
+        return q_target # shape should be [batch_size, 1]
 
 # double DQN Agent
 class DDQNAgent(DQNAgent):
@@ -91,11 +79,5 @@ class DDQNAgent(DQNAgent):
         with torch.no_grad():
             # consult behavior network for action recommendations
             next_actions_tensor = self.behaviorPolicyNet.forward(next_obs_tensor).argmax(dim=-1)
-            match self.params['qnet_type']:
-                case 'DeepQNet':
-                    q_target = rewards_tensor + self.params['gamma'] * (1 - dones_tensor) * torch.gather(self.targetPolicyNet.forward(next_obs_tensor), -1, next_actions_tensor.unsqueeze(-1)).squeeze(-1)
-                case 'ConvDeepQNet': # it is annoying that the output dimensions are different on this one
-                    q_target = rewards_tensor + self.params['gamma'] * (1 - dones_tensor) * torch.gather(self.targetPolicyNet.forward(next_obs_tensor), -1, next_actions_tensor.unsqueeze(-1))
-                case _:
-                    pass
-        return q_target
+            q_target = rewards_tensor + self.params['gamma'] * (1 - dones_tensor) * torch.gather(self.targetPolicyNet.forward(next_obs_tensor), -1, next_actions_tensor.unsqueeze(-1))
+        return q_target # shape should be [batch_size, 1]

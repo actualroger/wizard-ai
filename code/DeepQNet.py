@@ -1,6 +1,7 @@
 
 from collections import OrderedDict
 import torch.nn as nn
+from torch import split, cat
 
 # customized weight initialization
 def customized_weights_init(m):
@@ -130,4 +131,65 @@ class DuelingQNet(Qnet):
     def forward(self, x):
         convolution = self.conv_stack(x)
         advantages = self.action_stack(convolution)
-        return self.value_stack(convolution) - advantages.sum() + self.action_stack(convolution)
+        return self.value_stack(convolution) - advantages.sum() + advantages
+
+# generalized version below, composed of an input stack with parallel fully connected and convolutional layers
+# then a dueling set of fully connected layers
+
+# stack of convolutional layers
+def ConvStack(layer_num, channel_num, kernel_size) -> nn.Module:
+    assert(layer_num > 0)
+    convLayers = OrderedDict()
+    for i in range(layer_num):
+        convLayers['conv%d' % i] = nn.Conv1d(1 if i == 0 else channel_num,
+                                             1 if i == layer_num - 1 else channel_num,
+                                             kernel_size)
+        convLayers['conv%dRelu' % i] = nn.ReLU()
+    return nn.Sequential(convLayers)
+
+# stack of fully connected layers
+def FullStack(input_dim, layer_num, layer_dim, output_dim, finalRelu: bool = False) -> nn.Module:
+    assert(layer_num > 0)
+    fullLayers = OrderedDict()
+    for i in range(layer_num):
+        fullLayers['full%d' % i] = nn.Linear(input_dim if i == 0 else layer_dim,
+                                             output_dim if i == layer_num - 1 else layer_dim)
+        if i < layer_num - 1 or finalRelu:
+            fullLayers['full%dRelu' % i] = nn.ReLU()
+    return nn.Sequential(fullLayers)
+
+class GeneralDuelingQNet(Qnet):
+    # constructor
+    def __init__(self, params):
+        super().__init__()
+
+        observation_dim = params['observation_dim']
+        input_header_len = params['input_header_len']
+        input_full_layer_num = params['input_full_layer_num']
+        input_full_layer_dim = params['input_full_layer_dim']
+        conv_layer_num = params['conv_layer_num']
+        conv_channel_num = params['conv_channel_num']
+        conv_kernel_size = params['conv_kernel_size']
+        value_num_hidden_layer = params['value_hidden_layer_num']
+        value_dim_hidden_layer = params['value_hidden_layer_dim']
+        action_num_hidden_layer = params['action_hidden_layer_num']
+        action_dim_hidden_layer = params['action_hidden_layer_dim']
+        action_dim = params['action_dim']
+
+        self.input_header_len = input_header_len
+        self.inputFullStack = FullStack(input_header_len, input_full_layer_num, input_full_layer_dim, input_full_layer_dim, True)
+        self.input_cov_len = observation_dim - input_header_len
+        assert(self.input_cov_len >= 0)
+        self.inputConvStack = ConvStack(conv_layer_num, conv_channel_num, conv_kernel_size)
+        self.intermediateSize = observation_dim - input_header_len - conv_layer_num * (conv_kernel_size - 1) + input_full_layer_dim
+        self.flatten = nn.Flatten(1, -1)
+        self.valueFullStack = FullStack(self.intermediateSize, value_num_hidden_layer, value_dim_hidden_layer, 1)
+        self.actionFullStack = FullStack(self.intermediateSize, action_num_hidden_layer, action_dim_hidden_layer, action_dim)
+
+    def forward(self, x):
+        inputSplit = split(x, [self.input_header_len, self.input_cov_len], -1) # split data into header and deck
+        inputFullProc = self.inputFullStack(inputSplit[0]) # full stack process header
+        inputConvProc = self.inputConvStack(inputSplit[1]) # conv process deck
+        intermediate = self.flatten(cat([inputFullProc, inputConvProc], -1)) # concatenate
+        advantages = self.actionFullStack(intermediate) # evaluate actions
+        return self.valueFullStack(intermediate) - advantages.sum() + advantages # add to values and normalize

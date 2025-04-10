@@ -122,8 +122,8 @@ class env():
 			   "previous": self.previousPiles,
 			   "trump": self.trumpSuit,
 			   "led": self.ledSuit,
-			   "selfNeeded": (self.bets[agent] if isinstance(self.bets[agent], int) else 0) - self.wins[agent],
-			   "totalNeeded": sum([s for s in self.bets if isinstance(s, int)]) - sum(self.wins),
+			   "selfNeeded": (self.bets[agent] if self.bets[agent] is not None else 0) - self.wins[agent],
+			   "totalNeeded": sum([s for s in self.bets if s is not None]) - sum(self.wins),
 			   "numPlayers": self.numPlayers}
 		actionMask = self.actionMask(agent)
 		observation = {"observation": obs, "actionMask": actionMask}

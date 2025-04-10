@@ -14,7 +14,8 @@ def plotCurves(arr_list,
                ylabel: str = '',
                show: bool = True,
                filename: str = None,
-               max_plot_length: int = 10000):
+               max_plot_length: int = 10000,
+               plot_smooth_means: bool = True):
     """
     Args:
         arr_list (list): list of results arrays to plot
@@ -66,7 +67,8 @@ def plotCurves(arr_list,
         # save the plot handle
         h_list.append(h)
         # plot smoothed result
-        h, = ax.plot(x_data, moving_average(meanData), color=color, alpha=1.0)
+        if plot_smooth_means:
+            h, = ax.plot(x_data, moving_average(meanData), color=color, alpha=1.0)
     
     # plot the upper bound
     if len(upper_bound) > 0:
@@ -98,7 +100,7 @@ def plotAgentScores(scores, **kwargs):
     numPlayers = len(scores)
     roundNumbers = range(1, 60 // numPlayers + 1)
     expectedScores = [20 + 10 * (round / (0.0 + numPlayers)) for round in roundNumbers]
-    plotCurvesAutolabel(scores, x_values=roundNumbers, xlabel='Round', ylabel='Score', upper_bound=expectedScores, upper_bound_label='Nominal', **kwargs)
+    plotCurvesAutolabel(scores, x_values=roundNumbers, xlabel='Round', ylabel='Score', upper_bound=expectedScores, upper_bound_label='Nominal', plot_smooth_means=False, **kwargs)
 
 # plot training losses
 def plotTrainingLosses(train_losses, **kwargs):

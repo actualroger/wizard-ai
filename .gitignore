@@ -4,3 +4,4 @@ __pycache__
 *.synctex.gz
 
 runs/test/training*
+runs/test/*.pt

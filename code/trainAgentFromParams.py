@@ -16,7 +16,7 @@ from DQNAgent import *
 from Agent import *
 
 # train a number of individual agents
-def trainAgents(env, params, saveAgent: bool = False):
+def trainAgents(env, params):
     # create the agents
     numAgents = params['num_agents']
     agentClass = getattr(sys.modules[__name__], params['agent_type'])
@@ -57,20 +57,17 @@ def trainAgents(env, params, saveAgent: bool = False):
 
     pbar.close()
 
-    # print best agent to json
-    if saveAgent:
-        if params['pooled']:
-            bestAgent = baseAgent
-        else:
-            bestAgent = agents[np.argmax(total_scores)]
-        try:
-            torch.save(bestAgent.behaviorPolicyNet.state_dict(), f"./runs/{params['model_name']}")
-        except Exception:
-            print('Failed to write agent')
-            print(traceback.format_exc)
+    # save best agent to file
+    if params['pooled']:
+        bestAgent = baseAgent
+        bestScore = max(total_scores)
+    else:
+        agentI = np.argmax(total_scores)
+        bestAgent = agents[agentI]
+        bestScore = total_scores[agentI]
 
     # save the results
-    return train_returns, train_losses, train_lengths
+    return train_returns, train_losses, train_lengths, bestScore, bestAgent
 
 # trains agents for multiple runs
 def trainAgentsMultipleTimes(params):
@@ -87,13 +84,18 @@ def trainAgentsMultipleTimes(params):
     train_returns = []
     train_losses = []
     train_lengths = []
+    best_score = -float('inf')
+    best_agent = None
     for i in range(params['num_runs']):
-        tr, tl, tll = trainAgents(my_env, params, saveAgent=(i==0))
+        tr, tl, tll, bs, ba = trainAgents(my_env, params)
         train_returns.append(tr)
         train_losses.append(tl)
         train_lengths.append(tll)
+        if bs > best_score:
+            best_score = bs
+            best_agent = ba
 
-    return train_returns, train_losses, train_lengths
+    return train_returns, train_losses, train_lengths, best_agent
 
 def trainAgentFromParams(settingsFile):
     print('Training from', settingsFile)
@@ -114,11 +116,18 @@ def trainAgentFromParams(settingsFile):
 
     # train agents
     try:
-        train_returns, train_losses, train_lengths = trainAgentsMultipleTimes(params)
+        train_returns, train_losses, train_lengths, bestAgent = trainAgentsMultipleTimes(params)
     except Exception:
         print("\nFailure during training")
         print(traceback.format_exc())
         return
+
+    # save agent
+    try:
+        torch.save(bestAgent.behaviorPolicyNet.state_dict(), os.path.join(absFolder, 'agent_dict.pt'))
+    except Exception:
+        print('Failed to write agent')
+        print(traceback.format_exc)
 
     # write result vectors
     try:
@@ -148,5 +157,3 @@ if __name__ == '__main__':
 # load state dict from json
 # with open('agent.json', 'r') as f:
 #     self.behaviorPolicyNet.load_state_dict(json.load(f))
-
-# TODO plot 500k and 500k_pooled

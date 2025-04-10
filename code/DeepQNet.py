@@ -11,6 +11,11 @@ def customized_weights_init(m):
         # init the params using uniform
         nn.init.xavier_uniform_(m.weight, gain=gain)
         nn.init.constant_(m.bias, 0)
+    # init the convolutional layer
+    if isinstance(m, nn.Conv1d):
+        # init the params using uniform
+        nn.init.xavier_uniform_(m.weight, gain=gain)
+        nn.init.constant_(m.bias, 0)
     # init the linear layer
     if isinstance(m, nn.Linear):
         # init the params using uniform
@@ -73,3 +78,4 @@ class ConvDeepQNet(nn.Module):
         return self.linear_relu_stack(x)
 
 # TODO dueling network
+# TODO ddqn

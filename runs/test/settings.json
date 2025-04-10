@@ -4,10 +4,10 @@
     "num_runs": 2,
     "device": "cpu",
 
-    "agent_type": "DQNAgent",
-    "qnet_type": "ConvDeepQNet",
+    "agent_type": "DDQNAgent",
+    "qnet_type": "DeepQNet",
     "num_agents": 4,
-    "pooled": false,
+    "pooled": true,
 
     "observation_dim": 65,
     "action_dim": 86,

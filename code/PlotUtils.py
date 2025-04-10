@@ -136,10 +136,10 @@ def plotCurvesSequence(arr_list,
     for arr in arr_list:
         x_data = range(arr.shape[1]) if len(x_values) == 0 else x_values
         numRuns = arr.shape[0]
-        runSmoothing = max(numRuns // numRunGroups, 1)
+        runsPerGroup = max(numRuns // numRunGroups, 1)
         colors = plt.cm.jet(np.linspace(0,1,numRuns))
-        for run in range(runSmoothing, numRuns+runSmoothing, runSmoothing):
-            plt.plot(x_data, arr[max(0, run-runSmoothing):run].mean(axis=0), color=colors[run-runSmoothing])
+        for run in range(runsPerGroup, numRuns+runsPerGroup, runsPerGroup):
+            plt.plot(x_data, arr[max(0, run-runsPerGroup):run].mean(axis=0), color=colors[run-runsPerGroup])
 
     # plot the upper bound
     if len(upper_bound) > 0:

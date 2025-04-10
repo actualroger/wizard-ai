@@ -73,3 +73,29 @@ class DQNAgent(NNAgent):
                 case _: # should throw error, but we shouldn't get here because constructor should crash
                     pass
         return q_target
+
+# double DQN Agent
+class DDQNAgent(DQNAgent):
+    # constructor
+    def __init__(self, env, params):
+        super().__init__(env, params)
+
+    # evaluate target network
+    def evaluateTargetNetwork(self, batch_data_tensor):
+        # get the transition data
+        next_obs_tensor = batch_data_tensor['next_obs']
+        rewards_tensor = batch_data_tensor['reward']
+        dones_tensor = batch_data_tensor['done']
+
+        # compute the TD target using the target network
+        with torch.no_grad():
+            # consult behavior network for action recommendations
+            next_actions_tensor = self.behaviorPolicyNet.forward(next_obs_tensor).argmax(dim=-1)
+            match self.params['qnet_type']:
+                case 'DeepQNet':
+                    q_target = rewards_tensor + self.params['gamma'] * (1 - dones_tensor) * torch.gather(self.targetPolicyNet.forward(next_obs_tensor), -1, next_actions_tensor.unsqueeze(-1)).squeeze(-1)
+                case 'ConvDeepQNet': # it is annoying that the output dimensions are different on this one
+                    q_target = rewards_tensor + self.params['gamma'] * (1 - dones_tensor) * torch.gather(self.targetPolicyNet.forward(next_obs_tensor), -1, next_actions_tensor.unsqueeze(-1))
+                case _:
+                    pass
+        return q_target

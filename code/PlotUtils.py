@@ -60,7 +60,7 @@ def plotCurves(arr_list,
         arr_err = arr.std(axis=0) / np.sqrt(arr.shape[0])
         # plot the mean
         meanData = arr.mean(axis=0)
-        h, = ax.plot(x_data, meanData, color=color, label=legend, alpha=0.3)
+        h, = ax.plot(x_data, meanData, color=color, label=legend, alpha=(0.3 if plot_smooth_means else 1.0))
         # plot the confidence band
         arr_err = 1.96 * arr_err
         ax.fill_between(x_data, meanData - arr_err, meanData + arr_err, alpha=0.2, color=color)

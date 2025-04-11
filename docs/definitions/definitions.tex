@@ -320,4 +320,68 @@ Once the agent is able to play for an arbitrary choice of hand and bet, it shoul
 
 There is one more special state; the dealer turns over the top card of the deck to set the trump suit after dealing the hand. If this card is a Wizard, the dealer is able to choose the trump suit. Again, this creates four actions that only occur in this rare situation. And again, access to the state value function is useful to train this, and no additional state information is necessary, so it can be rolled into the larger agent. Since this choice appears before the choice of bet and before play, it should be trained last. During training this choice should be taken randomly.
 
+\clearpage
+
+\section{Neural Network Structure}
+
+\tikzstyle{round} = [rectangle, rounded corners, 
+minimum width=1cm, 
+minimum height=1cm,
+text centered, 
+draw=black, 
+fill=cyan!30]
+
+\tikzstyle{rect} = [rectangle, 
+minimum width=1cm, 
+minimum height=1cm, 
+text centered,  
+draw=black, 
+fill=orange!30]
+
+\tikzstyle{arrow} = [thick,->,>=stealth]
+
+\begin{figure}[h!]
+\centering
+\begin{tikzpicture}[node distance=3cm]
+
+\node(header) [rect] {Header};
+\node(deck) [rect, below of=header, minimum height=4cm] {Deck};
+
+\node(fullIn) [round, right of=header] {Fully Connected 2x16};
+\node(convIn) [round, below of=fullIn, minimum height=4cm] {Convolutional 2x5x5};
+
+\node(flatten) [round, right of=fullIn, yshift=-2.25cm, minimum height=5.5cm] {Flatten};
+
+\node(fullValue) [round, right of=flatten, yshift=2.25cm] {Fully Connected 2x16};
+\node(fullAdv) [round, below of=fullValue, minimum height=4cm] {Fully Connected 2x64};
+
+\node(value) [rect, right of=fullValue] {$V(s)$};
+\node(adv) [rect, below of=value, minimum height=4cm] {$A(s,a)$};
+
+\node(q) [rect, right of=value, xshift=-0.5cm, yshift=-2.25cm] {$Q(s,a)$};
+
+\draw [arrow] (header) -- node[above] {5} (fullIn);
+\draw [arrow] (deck) -- node[above] {60} (convIn);
+\draw [arrow] ([xshift=2cm] fullIn) -- (flatten);
+\draw [arrow] (convIn) -- (flatten);
+\draw [arrow] ([yshift=2.5cm] flatten) -- (fullValue);
+\draw [arrow] (flatten) -- (fullAdv);
+\draw [arrow] (fullValue) -- node[above] {1} (value);
+\draw [arrow] (fullAdv) -- node[above] {86} (adv);
+\draw [arrow] (value) -- (q);
+\draw [arrow] (adv) -- (q);
+
+%\draw [arrow] (start) -- (in1);
+%\draw [arrow] (in1) -- (pro1);
+%\draw [arrow] (pro1) -- (dec1);
+%\draw [arrow] (dec1) -- node[anchor=east] {yes} (pro2a);
+%\draw [arrow] (dec1) -- node[anchor=south] {no} (pro2b);
+%\draw [arrow] (pro2b) |- (pro1);
+%\draw [arrow] (pro2a) -- (out1);
+%\draw [arrow] (out1) -- (stop);
+
+\end{tikzpicture}
+\caption{Neural Network Architecture}
+\end{figure}
+
 \end{document}

@@ -138,10 +138,11 @@ def plotCurvesSequence(arr_list,
     for arr in arr_list:
         x_data = range(arr.shape[1]) if len(x_values) == 0 else x_values
         numRuns = arr.shape[0]
-        runsPerGroup = max(numRuns // numRunGroups, 1)
-        colors = plt.cm.jet(np.linspace(0,1,numRuns))
-        for run in range(runsPerGroup, numRuns+runsPerGroup, runsPerGroup):
-            plt.plot(x_data, arr[max(0, run-runsPerGroup):run].mean(axis=0), color=colors[run-runsPerGroup])
+        arr_bin = bin_data(arr, max(numRuns // numRunGroups, 1), 0)
+        newNumRuns = arr_bin.shape[0]
+        colors = plt.cm.jet(np.linspace(0,1,newNumRuns))
+        for run in range(newNumRuns):
+            plt.plot(x_data, arr_bin[run], color=colors[run-newNumRuns])
 
     # plot the upper bound
     if len(upper_bound) > 0:
@@ -211,10 +212,12 @@ def trimDims(L):
 def bin_data(data: np.array, numGroups, dim: int = 0):
     dataLength = data.shape[dim]
     groupLength = max(dataLength // numGroups, 1)
+    groupBounds = [s for s in range(0, dataLength, groupLength)]
+    groupBounds[-1] = dataLength # avoid creating a short last group
     newData = np.array( # return np.array
         [np.mean( # mean of each window
-            np.take(data, range(s,min(s+groupLength, dataLength)), dim), axis=dim) # slice window in dimension
-        for s in range(0, dataLength, groupLength)] # for each slice
+            np.take(data, range(groupBounds[i], groupBounds[i+1]), dim), axis=dim) # slice window in dimension
+        for i in range(len(groupBounds)-1)] # for each slice
         )
     return np.moveaxis(newData, 0, dim) # move dim back where it was
 

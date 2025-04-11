@@ -11,7 +11,7 @@ from AgentUtils import loadAgent
 agentFolder = sys.argv[1]
 numPlayers = 4
 
-numGames = 10
+numGames = 50
 
 seed = 0
 verbosity = 0

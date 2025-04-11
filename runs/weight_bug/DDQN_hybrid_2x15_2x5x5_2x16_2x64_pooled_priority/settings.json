@@ -1,7 +1,7 @@
 {
     "model_name": "DDQN_hybrid_2x15_2x5x5_2x16_2x64_500k_pooled",
     "seed": 0,
-    "num_runs": 1,
+    "num_runs": 5,
     "device": "cpu",
 
     "agent_type": "DDQNAgent",

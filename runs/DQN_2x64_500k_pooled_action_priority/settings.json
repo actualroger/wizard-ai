@@ -1,7 +1,7 @@
 {
     "model_name": "DQN_2x64_500k_pooled_action_priority",
     "seed": 0,
-    "num_runs": 5,
+    "num_runs": 1,
     "device": "cpu",
 
     "agent_type": "DQNAgent",

@@ -186,7 +186,7 @@ class NNAgent(Agent):
         # aping https://github.com/rlcode/per/blob/master/cartpole_per.py not sure if correct
         match self.params['buffer_type']:
             case 'action_priority':
-                loss = (torch.tensor(self.buffer.prev_weights) * baseLoss).mean()
+                loss = (baseLoss / torch.tensor(self.buffer.prev_weights)).mean()
             case _:
                 loss = baseLoss
 

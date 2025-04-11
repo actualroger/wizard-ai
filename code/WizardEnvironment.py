@@ -37,8 +37,8 @@ class env():
 		self.hands = [] * self.numPlayers # cards in hand
 		self.pile = [] # cards in this trick pile
 		self.previousPiles = [] # played cards
-		self.trumpSuit = [] # which suit is trump
-		self.ledSuit = [] # which suit was led
+		self.trumpSuit = Suit.NONE # which suit is trump
+		self.ledSuit = Suit.NONE # which suit was led
 		self.playPhase = -1 # phase of play (-1 = done, 0 = normal play, 1 = betting, 2 = choose trump)
 		self.leader = -1 # who dealt this hand
 
@@ -95,7 +95,7 @@ class env():
 		if self.deck.numCards == 0:
 			if self.verbosity > 0:
 				print("Set no trump (empty deck)")
-			self.trumpSuit = [] # no trump
+			self.trumpSuit = Suit.NONE # no trump
 			self.incrementAgent() # player after dealer bets first
 			return
 		
@@ -122,7 +122,7 @@ class env():
 			   "previous": self.previousPiles,
 			   "trump": self.trumpSuit,
 			   "led": self.ledSuit,
-			   "selfNeeded": (self.bets[agent] if self.bets[agent] is not None else 0) - self.wins[agent],
+			   "selfNeeded": (0 if self.bets[agent] is None else self.bets[agent]) - self.wins[agent],
 			   "totalNeeded": sum([s for s in self.bets if s is not None]) - sum(self.wins),
 			   "numPlayers": self.numPlayers}
 		actionMask = self.actionMask(agent)

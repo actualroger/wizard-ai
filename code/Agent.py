@@ -153,7 +153,7 @@ class NNAgent(Agent):
         else:  # with probability 1 - eps, the agent selects a greedy policy
             with torch.no_grad():
                 actionMaskTensor = torch.tensor(actionMask, dtype=bool)
-                q_values = self.behaviorPolicyNet(state).masked_fill(~actionMaskTensor, float('-inf'))
+                q_values = self.behaviorPolicyNet.forward(state).masked_fill(~actionMaskTensor, float('-inf'))
                 action = q_values.max(dim=-1)[1].item()
 
         if self.learningActive: # learn if we want to

@@ -20,7 +20,7 @@
 
     "total_training_time_step": 500000,
 
-    "schedule_type": "linear",
+    "epsilon_schedule_type": "linear",
     "epsilon_start_value": 1.0,
     "epsilon_end_value": 0.01,
     "epsilon_duration": 250000,

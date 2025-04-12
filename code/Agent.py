@@ -59,6 +59,8 @@ class NNAgent(Agent):
                     self.buffer = Buffer.ReplayBuffer(params['replay_buffer_size'])
                 case 'action_priority':
                     self.buffer = Buffer.ActionPriorityBuffer(params['replay_buffer_size'], params)
+                case 'q_priority':
+                    self.buffer = Buffer.QPriorityBuffer(params['replay_buffer_size'], params)
                 case _:
                     raise RuntimeError("No buffer provided")
         else:
@@ -66,19 +68,13 @@ class NNAgent(Agent):
 
         # epsilon schedule
         if schedule is None:
-            match params['schedule_type']:
-                case 'linear':
-                    self.schedule = Schedule.LinearSchedule(
-                        start_value=params['epsilon_start_value'],
-                        end_value=params['epsilon_end_value'],
-                        duration=params['epsilon_duration'])
-                case 'exponential':
-                    self.schedule = Schedule.ExponentialSchedule(
-                        start_value=params['epsilon_start_value'],
-                        end_value=params['epsilon_end_value'],
-                        duration=params['epsilon_duration'])
-                case _:
-                    raise RuntimeError("No epsilon schedule provided")
+            epsParams = {'schedule_type' : params['epsilon_schedule_type'],
+                         'start_value' : params['epsilon_start_value'],
+                         'end_value' : params['epsilon_end_value'],
+                         'duration' : params['epsilon_duration']}
+            self.schedule = Schedule.createSchedule(epsParams)
+            if self.schedule is None:
+                raise RuntimeError("No epsilon schedule provided")
         else:
             self.schedule = schedule
 
@@ -183,10 +179,13 @@ class NNAgent(Agent):
         baseLoss = self.lossFunction(q_behavior, q_target)
 
         # apply weighting if necessary
-        # aping https://github.com/rlcode/per/blob/master/cartpole_per.py not sure if correct
         match self.params['buffer_type']:
             case 'action_priority':
                 loss = (baseLoss / torch.tensor(self.buffer.prev_weights)).mean()
+            case 'q_priority':
+                errors = torch.abs(q_behavior - q_target)
+                self.buffer.setErrors(self.buffer.prev_indices, errors)
+                loss = (torch.FloatTensor(self.buffer.prev_weights) * baseLoss).mean()
             case _:
                 loss = baseLoss
 
@@ -234,6 +233,15 @@ class NNAgent(Agent):
     # add experience to buffer
     def addToBuffer(self, s, a, am, r, sp, d):
         self.buffer.add(s, a, am, r, sp, d)
+        if self.params['buffer_type'] == 'q_priority': # update buffer weights
+            with torch.no_grad():
+                next_idx = self.buffer.__len__() - 1 if self.buffer._next_idx == 0 else self.buffer._next_idx - 1
+                encodedSample = self.buffer._encode_sample([next_idx])
+                batch_data_tensor = self._batch_to_tensor(encodedSample)
+                q_behavior = self.evaluateBehaviorNetwork(batch_data_tensor)
+                q_target = self.evaluateTargetNetwork(batch_data_tensor)
+                error = abs(q_behavior - q_target)
+                self.buffer.addError(error.item())
         self.checkLearning()
 
     # consider updating the neural nets

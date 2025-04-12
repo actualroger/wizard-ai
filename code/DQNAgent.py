@@ -81,3 +81,5 @@ class DDQNAgent(DQNAgent):
             next_actions_tensor = self.behaviorPolicyNet.forward(next_obs_tensor).argmax(dim=-1)
             q_target = rewards_tensor + self.params['gamma'] * (1 - dones_tensor) * torch.gather(self.targetPolicyNet.forward(next_obs_tensor), -1, next_actions_tensor.unsqueeze(-1))
         return q_target # shape should be [batch_size, 1]
+
+# TODO PPO AGENT

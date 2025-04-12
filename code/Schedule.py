@@ -12,6 +12,23 @@ class Schedule(object):
     def getValue(self, t) -> float:
         raise NotImplementedError("Schedule subclass must implement getValue(t)->float")
 
+# create arbitrary schedule subclass from params
+def createSchedule(params) -> Schedule:
+    match params['schedule_type']:
+        case 'linear':
+            schedule = LinearSchedule(
+                start_value=params['start_value'],
+                end_value=params['end_value'],
+                duration=params['duration'])
+        case 'exponential':
+            schedule = ExponentialSchedule(
+                start_value=params['start_value'],
+                end_value=params['end_value'],
+                duration=params['duration'])
+        case _:
+            schedule = None
+    return schedule
+
 class LinearSchedule(Schedule):
     def __init__(self, start_value, end_value, duration):
         super().__init__(start_value, end_value, duration)

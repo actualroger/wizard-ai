@@ -181,7 +181,7 @@ class NNAgent(Agent):
         # apply weighting if necessary
         match self.params['buffer_type']:
             case 'action_priority':
-                loss = (baseLoss / torch.tensor(self.buffer.prev_weights)).mean()
+                loss = (torch.tensor(self.buffer.prev_weights) * baseLoss).mean()
             case 'q_priority':
                 errors = torch.abs(q_behavior - q_target)
                 self.buffer.setErrors(self.buffer.prev_indices, errors)

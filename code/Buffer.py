@@ -111,13 +111,15 @@ class PriorityBuffer(ReplayBuffer):
         """ Args:
                 batch_size (int): size of the sampled batch data.
         """
+        normWeights = [w / self._total_weight for w in self._weights]
         # sample indices with replacement
         indices = self.rng.choice(len(self._data_buffer),
                                   size=batch_size,
-                                  p=[w / self._total_weight for w in self._weights],
+                                  p=normWeights,
                                   replace=False,
                                   shuffle=False)
-        self.prev_weights = [self._weights[i] for i in indices]
+        is_weight = [normWeights[i] for i in indices]
+        self.prev_weights = is_weight / is_weight.max()
         return self._encode_sample(indices)
 
     def priorityFunction(self, transition) -> float:

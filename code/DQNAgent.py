@@ -83,3 +83,4 @@ class DDQNAgent(DQNAgent):
         return q_target # shape should be [batch_size, 1]
 
 # TODO PPO AGENT
+# TODO LOSS TYPES?

@@ -91,6 +91,8 @@ def trainAgentsMultipleTimes(params):
     return train_returns, train_losses, train_lengths, best_agent
 
 def trainAgentFromParams(settingsFile):
+    if os.path.isdir(settingsFile):
+        settingsFile = os.path.join(settingsFile, 'settings.json')
     print('Training from', settingsFile)
     absFile = os.path.abspath(settingsFile)
     absFolder = os.path.dirname(absFile)

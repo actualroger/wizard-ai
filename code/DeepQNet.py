@@ -137,12 +137,12 @@ class DuelingQNet(Qnet):
 # then a dueling set of fully connected layers
 
 # stack of convolutional layers
-def ConvStack(layer_num, channel_num, kernel_size) -> nn.Module:
+def ConvStack(layer_num, channel_num, kernel_size, out_channel_num) -> nn.Module:
     assert(layer_num > 0)
     convLayers = OrderedDict()
     for i in range(layer_num):
         convLayers['conv%d' % i] = nn.Conv1d(1 if i == 0 else channel_num,
-                                             1 if i == layer_num - 1 else channel_num,
+                                             out_channel_num if i == layer_num - 1 else channel_num,
                                              kernel_size)
         convLayers['conv%dRelu' % i] = nn.ReLU()
     return nn.Sequential(convLayers)
@@ -170,6 +170,7 @@ class GeneralDuelingQNet(Qnet):
         conv_layer_num = params['conv_layer_num']
         conv_channel_num = params['conv_channel_num']
         conv_kernel_size = params['conv_kernel_size']
+        conv_output_channel_num = params['conv_output_channel_num']
         value_num_hidden_layer = params['value_hidden_layer_num']
         value_dim_hidden_layer = params['value_hidden_layer_dim']
         action_num_hidden_layer = params['action_hidden_layer_num']
@@ -180,9 +181,9 @@ class GeneralDuelingQNet(Qnet):
         self.inputFullStack = FullStack(input_header_len, input_full_layer_num, input_full_layer_dim, input_full_layer_dim, True)
         self.input_cov_len = observation_dim - input_header_len
         assert(self.input_cov_len >= 0)
-        self.inputConvStack = ConvStack(conv_layer_num, conv_channel_num, conv_kernel_size)
-        self.intermediateSize = observation_dim - input_header_len - conv_layer_num * (conv_kernel_size - 1) + input_full_layer_dim
-        self.flatten = nn.Flatten(1, -1)
+        self.inputConvStack = ConvStack(conv_layer_num, conv_channel_num, conv_kernel_size, conv_output_channel_num)
+        self.intermediateSize = (observation_dim - input_header_len - conv_layer_num * (conv_kernel_size - 1)) * conv_output_channel_num + input_full_layer_dim
+        self.flatten = nn.Flatten(-2, -1) # [optional batch][channel][neuron] -> [optional batch][neuron]
         self.valueFullStack = FullStack(self.intermediateSize, value_num_hidden_layer, value_dim_hidden_layer, 1)
         self.actionFullStack = FullStack(self.intermediateSize, action_num_hidden_layer, action_dim_hidden_layer, action_dim)
 
@@ -190,6 +191,8 @@ class GeneralDuelingQNet(Qnet):
         inputSplit = split(x, [self.input_header_len, self.input_cov_len], -1) # split data into header and deck
         inputFullProc = self.inputFullStack(inputSplit[0]) # full stack process header
         inputConvProc = self.inputConvStack(inputSplit[1]) # conv process deck
-        intermediate = self.flatten(cat([inputFullProc, inputConvProc], -1)) # concatenate
+        intermediate = cat([self.flatten(inputFullProc), self.flatten(inputConvProc)], -1)
+        if intermediate.ndim < 2: # [neuron] to [single batch][neuron] for single evaluations to match batch formatting
+            intermediate = intermediate.unsqueeze(0)
         advantages = self.actionFullStack(intermediate) # evaluate actions
         return self.valueFullStack(intermediate) - advantages.sum() + advantages # add to values and normalize

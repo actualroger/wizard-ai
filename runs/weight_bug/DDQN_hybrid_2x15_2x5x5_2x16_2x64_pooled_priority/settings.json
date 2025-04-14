@@ -1,7 +1,7 @@
 {
     "model_name": "DDQN_hybrid_2x15_2x5x5_2x16_2x64_500k_pooled",
     "seed": 0,
-    "num_runs": 5,
+    "num_runs": 1,
     "device": "cpu",
 
     "agent_type": "DDQNAgent",
@@ -17,6 +17,7 @@
     "input_full_layer_dim": 16,
     "conv_layer_num": 2,
     "conv_channel_num": 5,
+    "conv_output_channel_num": 1,
     "conv_kernel_size": 5,
     "value_hidden_layer_num": 2,
     "value_hidden_layer_dim": 16,

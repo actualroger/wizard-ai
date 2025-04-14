@@ -1,0 +1,3 @@
+zero_bet_bug contains runs in which the environment did not return bets because it was checking for int and not np.int64
+weight_bug contains runs in which action priority was not normalizing weights by their own maximum or by total buffer weight
+weight_bug_2 contains runs in which action priority was not normalizing by minimum batch weight, and q priority without a beta schedule was multiplying by weights instead of dividing

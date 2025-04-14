@@ -213,7 +213,7 @@ class QPriorityBuffer(PriorityBuffer):
         if self.betaSchedule is not None:
             is_weight = np.power(self.__len__() * rawWeights, -self.betaSchedule.getValue(self.step))
         else:
-            is_weight = np.array(1 / (self.__len__() * rawWeights))
+            is_weight = 1 / (self.__len__() * np.array(rawWeights))
         self.step += 1
         self.prev_weights = is_weight / is_weight.max()
         self.prev_indices = indices

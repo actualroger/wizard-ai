@@ -175,7 +175,7 @@ def plotTrainingReturns(train_returns, **kwargs):
     train_returns_trimmed = np.transpose(train_returns_trimmed, (0,2,1,3)) # [run][game][player][hand] -> [run][player][game][hand]
     numPlayers = train_returns_trimmed.shape[1]
     train_returns_trimmed = train_returns_trimmed.reshape((-1,) + train_returns_trimmed.shape[2:]) # flatten run and agent to one dimension
-    roundNumbers = range(1, 60 // numPlayers + 1)
+    roundNumbers = range(1, train_returns_trimmed.shape[2] + 1)
     expectedScores = [20 + 10 * (round / (0.0 + numPlayers)) for round in roundNumbers]
     plotCurvesSequence(train_returns_trimmed, x_values=roundNumbers, xlabel='Round', ylabel='Score', upper_bound=expectedScores, upper_bound_label='Nominal', **kwargs)
 

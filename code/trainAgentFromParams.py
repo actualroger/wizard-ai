@@ -23,6 +23,10 @@ def trainAgents(env, params):
     # if 'buffer_prefill_size' in params: # check pooling?
     #     prefillBuffer(agents, params['buffer_prefill_size'])
 
+    # get game start and end rounds
+    startRound = params['start_round'] if 'start_round' in params else 1
+    endRound = params['end_round'] if 'end_round' in params else 60 // numAgents
+
     # training variables
     train_returns = []
     train_lengths = []
@@ -33,7 +37,7 @@ def trainAgents(env, params):
     pbar = tqdm(total=params['total_training_time_step'])
     while total_length < params['total_training_time_step']:
 
-        scores, length = rolloutGame(env, agents)
+        scores, length = rolloutGame(env, agents, minRound=startRound, maxRound=endRound)
         total_length += length
         train_lengths.append(length)
         pbar.update(length)

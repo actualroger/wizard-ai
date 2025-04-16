@@ -155,7 +155,6 @@ class NNAgent(Agent):
         if self.learningActive: # learn if we want to
             self.previousState = state
             self.previousAction = action
-            self.previousActionMask = actionMask
 
         if self.epsilonActive: # update timestep
             self.timestep += 1
@@ -208,7 +207,6 @@ class NNAgent(Agent):
     def clearPreviousState(self):
         self.previousState = None
         self.previousAction = None
-        self.previousActionMask = None
         self.previousReward = None
         self.previousDone = None
 
@@ -225,14 +223,13 @@ class NNAgent(Agent):
             self.addToBuffer(
                 self.previousState,
                 self.previousAction,
-                self.previousActionMask,
                 self.previousReward,
                 newState,
                 self.previousDone )
 
     # add experience to buffer
-    def addToBuffer(self, s, a, am, r, sp, d):
-        self.buffer.add(s, a, am, r, sp, d)
+    def addToBuffer(self, *args):
+        self.buffer.add(*args)
         if self.params['buffer_type'] == 'q_priority': # update buffer weights
             with torch.no_grad():
                 next_idx = self.buffer.__len__() - 1 if self.buffer._next_idx == 0 else self.buffer._next_idx - 1
@@ -260,13 +257,16 @@ class NNAgent(Agent):
 
     def _batch_to_tensor(self, batch_data):
         # store the tensor
-        batch_data_tensor = {'obs': [], 'action': [], 'action_mask': [], 'reward': [], 'next_obs': [], 'done': []}
+        batch_data_tensor = {'obs': [], 'action': [], 'reward': [], 'next_obs': [], 'done': []}
         # get the numpy arrays
-        obs_arr, action_arr, action_mask_arr, reward_arr, next_obs_arr, done_arr = batch_data
+        obs_arr = batch_data[0]
+        action_arr = batch_data[1]
+        reward_arr = batch_data[2]
+        next_obs_arr =batch_data[3]
+        done_arr = batch_data[4]
         # convert to tensors
         batch_data_tensor['obs'] = torch.tensor(obs_arr, dtype=torch.float32).to(self.device)
         batch_data_tensor['action'] = torch.tensor(action_arr).long().view(-1, 1).to(self.device)
-        batch_data_tensor['action_mask'] = torch.tensor(action_mask_arr, dtype=bool).view(-1, 1).to(self.device)
         batch_data_tensor['reward'] = torch.tensor(reward_arr, dtype=torch.float32).view(-1, 1).to(self.device)
         batch_data_tensor['next_obs'] = torch.tensor(next_obs_arr, dtype=torch.float32).to(self.device)
         batch_data_tensor['done'] = torch.tensor(done_arr, dtype=torch.float32).view(-1, 1).to(self.device)
@@ -293,7 +293,6 @@ class PassThroughAgent(NNAgent):
         if self.baseAgent.learningActive: # learn if we want to
             self.previousState = state # store our own experience
             self.previousAction = action
-            self.previousActionMask = actionMask
 
         return action
 
@@ -310,7 +309,6 @@ class PassThroughAgent(NNAgent):
             self.baseAgent.addToBuffer(
                 self.previousState,
                 self.previousAction,
-                self.previousActionMask,
                 self.previousReward,
                 newState,
                 self.previousDone)

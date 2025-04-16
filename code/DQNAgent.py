@@ -82,5 +82,38 @@ class DDQNAgent(DQNAgent):
             q_target = rewards_tensor + self.params['gamma'] * (1 - dones_tensor) * torch.gather(self.targetPolicyNet.forward(next_obs_tensor), -1, next_actions_tensor.unsqueeze(-1))
         return q_target # shape should be [batch_size, 1]
 
-# TODO PPO AGENT
+# PPO Agent
+class PPOAgent(DQNAgent):
+    # constructor
+    def __init__(self, env, params):
+        super().__init__(env, params)
+
+    # get action
+    def getAction(self, obs): # TODO include storing action prob
+        return super().getAction(obs)
+
+    # update behavior policy
+    def updateBehaviorPolicy(self, batch_data):
+        return super().updateBehaviorPolicy(batch_data)
+
+    # clear previous states
+    def clearPreviousState(self):
+        self.previousActionProb = None
+        return super().clearPreviousState()
+
+    # store new state
+    def storeExperience(self, newState):
+        if self.previousState is not None and self.previousReward is not None:
+            self.addToBuffer(
+                self.previousState,
+                self.previousAction,
+                self.previousActionProb,
+                self.previousReward,
+                newState,
+                self.previousDone )
+
+    # process batch data (which now has action probabilities/logits)
+    def _batch_to_tensor(self, batch_data): # TODO
+        return super()._batch_to_tensor(batch_data)
+
 # TODO LOSS TYPES?

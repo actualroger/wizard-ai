@@ -36,9 +36,9 @@ class ReplayBuffer(Buffer):
     def __len__(self):
         return len(self._data_buffer)
 
-    def add(self, obs, act, actMask, reward, next_obs, done):
+    def add(self, *args):
         # create a tuple
-        trans = (obs, act, actMask, reward, next_obs, done)
+        trans = (args)
 
         # interesting implementation
         if self._next_idx >= len(self._data_buffer):
@@ -49,30 +49,20 @@ class ReplayBuffer(Buffer):
         # increase the index
         self._next_idx = (self._next_idx + 1) % self.total_size
 
+    # fetch data arrays
     def _encode_sample(self, indices):
-        """ Function to fetch the state, action, reward, next state, and done arrays.
-
-            Args:
-                indices (list): list contains the index of all sampled transition tuples.
-        """
         # lists for transitions
-        obs_list, actions_list, action_masks_list, rewards_list, next_obs_list, dones_list = [], [], [], [], [], []
+        numLists = len(self._data_buffer[indices[0]])
+        outputList = [[] for _ in range(numLists)]
 
         # collect the data
         for idx in indices:
             # get the single transition
             data = self._data_buffer[idx]
-            obs, act, actMask, reward, next_obs, d = data
-            # convert to np arrays
-            obs_list.append(np.asarray(obs))
-            actions_list.append(np.asarray(act))
-            action_masks_list.append(np.asarray(actMask))
-            rewards_list.append(np.asarray(reward))
-            next_obs_list.append(np.asarray(next_obs))
-            dones_list.append(np.asarray(d))
-        # return the sampled batch data as numpy arrays
-        return np.array(obs_list), np.array(actions_list), np.array(action_masks_list), np.array(rewards_list), np.array(next_obs_list), np.array(
-            dones_list)
+            for l in numLists:
+                outputList[l].append(np.asarray(data[l]))
+        # return the sampled batch data as list of numpy arrays
+        return outputList
 
     def sampleBatch(self, batch_size):
         """ Args:
@@ -166,9 +156,9 @@ class QPriorityBuffer(PriorityBuffer):
         self.prev_indices = [] # previous sample batch indices
 
     # add experience only
-    def add(self, obs, act, actMask, reward, next_obs, done):
+    def add(self, *args):
         # create a tuple
-        trans = (obs, act, actMask, reward, next_obs, done)
+        trans = (args)
 
         # interesting implementation
         if self._next_idx >= len(self._data_buffer):

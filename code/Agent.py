@@ -262,7 +262,7 @@ class NNAgent(Agent):
         obs_arr = batch_data[0]
         action_arr = batch_data[1]
         reward_arr = batch_data[2]
-        next_obs_arr =batch_data[3]
+        next_obs_arr = batch_data[3]
         done_arr = batch_data[4]
         # convert to tensors
         batch_data_tensor['obs'] = torch.tensor(obs_arr, dtype=torch.float32).to(self.device)

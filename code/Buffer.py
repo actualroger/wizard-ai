@@ -59,10 +59,10 @@ class ReplayBuffer(Buffer):
         for idx in indices:
             # get the single transition
             data = self._data_buffer[idx]
-            for l in numLists:
+            for l in range(numLists):
                 outputList[l].append(np.asarray(data[l]))
         # return the sampled batch data as list of numpy arrays
-        return outputList
+        return [np.array(o) for o in outputList]
 
     def sampleBatch(self, batch_size):
         """ Args:

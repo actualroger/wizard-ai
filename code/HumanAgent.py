@@ -10,9 +10,9 @@ class HumanAgent(Agent):
     def getAction(self, obs) -> int:
         # print observation
         print("Received game state:\n\tHand: %s\n\tPile: %s\n\tPrevious: %s\n\tTrump: %s\n\tLed: %s\n\tNeeded: %d\n\tTotal Needed: %d\n\tPlayers: %d" % (
-              ' '.join(self.env.deck.toString(obs["observation"]["hand"])),
+              ' '.join(self.env.deck.toString(self.env.deck.reorderGroup(obs["observation"]["hand"], obs["observation"]["trump"], obs["observation"]["led"]))),
               ' '.join(self.env.deck.toString(obs["observation"]["pile"])),
-              ' '.join(self.env.deck.toString(obs["observation"]["previous"])),
+              ' '.join(self.env.deck.toString(self.env.deck.reorderGroup(obs["observation"]["previous"], obs["observation"]["trump"], obs["observation"]["led"]))),
               ' '.join(self.env.deck.toSuitString(obs["observation"]["trump"])),
               ' '.join(self.env.deck.toSuitString(obs["observation"]["led"])),
               obs["observation"]["selfNeeded"],
@@ -53,16 +53,18 @@ class HumanAgent(Agent):
         
         elif self.env.playPhase == Phase.PLAY: # choose card
             # print hand for user
-            allowedHand = [c for c in obs["observation"]["hand"] if obs["actionMask"][c] ]
-            allowedHandString = self.env.deck.toString(allowedHand)
+            allowedHandSorted = [c for c in
+                                 self.env.deck.reorderGroup(obs["observation"]["hand"], obs["observation"]["trump"], obs["observation"]["led"])
+                                 if obs["actionMask"][c]]
+            allowedHandSortedString = self.env.deck.toString(allowedHandSorted)
             # until we have good response
             while True:
-                userInput = input("Input card from %s : " % ' '.join(allowedHandString))
+                userInput = input("Input card from %s : " % ' '.join(allowedHandSortedString))
                 # test user input
-                if userInput.upper() in allowedHandString: # only return if valid
-                    return [allowedHand[i] for i in range(len(allowedHand)) if userInput.upper() == allowedHandString[i]][0]
-                elif len(allowedHandString) == 1: # one move
-                    return allowedHand[0]
+                if userInput.upper() in allowedHandSortedString: # only return if valid
+                    return [allowedHandSorted[i] for i in range(len(allowedHandSorted)) if userInput.upper() == allowedHandSortedString[i]][0]
+                elif len(allowedHandSortedString) == 1: # one move
+                    return allowedHandSorted[0]
                 else:
                     print('Invalid input')
         

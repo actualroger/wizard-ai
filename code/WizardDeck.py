@@ -81,6 +81,11 @@ class WizardDeck:
 		sortedSuits = [trumpSuit, ledSuit] + normalSuits
 		sortedSuits = [sortedSuits[i] for i in range(len(sortedSuits)) if sortedSuits[i] in normalSuits and sortedSuits[i] not in sortedSuits[:i]]
 		return [56,57,58,59] + [i for s in sortedSuits for i in range((s.value-1)*13+4, s.value*13+4)] + [0,1,2,3]
+		# TODO this puts low trumps next to wizards
+
+	def reorderGroup(self, cards, trumpSuit: Suit, ledSuit: Suit):
+		# reorders group of cards via reorderCards
+		return [c for c in self.reorderCards(trumpSuit, ledSuit) if c in cards]
 
 	def toString(self, cards):
 		if not isinstance(cards, list):

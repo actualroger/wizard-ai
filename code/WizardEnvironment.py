@@ -129,6 +129,8 @@ class env():
 		observation = {"observation": obs, "actionMask": actionMask}
 		self.agentObservation[agent] = observation
 		return observation
+	# TODO can agent distinguish between wizarded no-led and leading no-led?
+	# TODO can agent tell how many agents have bet?
 
 	def actionMask(self, agent): # gets allowable actions for agent
 		if agent != self.currentAgent: # wrong turn
@@ -249,6 +251,7 @@ class env():
 							self.deck.values[otherCard] > self.deck.values[winnerCard], # greater value
 							self.deck.suits[otherCard] == self.trumpSuit, # new trump
 							self.deck.suits[winnerCard] != self.trumpSuit, # old not trump
+							self.deck.suits[winnerCard] != Suit.WIZARD, # also old not wizard
 							self.trumpSuit
 						)
 					#       TRICK WINNER LOGIC:
@@ -268,7 +271,8 @@ class env():
 							self.deck.values[otherCard] > self.deck.values[winnerCard] # greater value
 						) or (
 							self.deck.suits[otherCard] == self.trumpSuit and # new trump
-	   						self.deck.suits[winnerCard] != self.trumpSuit # old not trump
+	   						self.deck.suits[winnerCard] != self.trumpSuit and # old not trump
+							self.deck.suits[winnerCard] != Suit.WIZARD # also old not wizard
 						):
 						winner = otherPlayer # new winner
 						winnerCard = otherCard

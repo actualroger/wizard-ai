@@ -19,8 +19,8 @@ numGames = 5
 minRound = 1
 maxRound = 6
 
-seed = 1
-envVerbosity = 2
+seed = 3
+envVerbosity = 1
 gameVerbosity = 1
 dealer = 0
 

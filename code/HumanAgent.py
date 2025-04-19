@@ -9,9 +9,10 @@ class HumanAgent(Agent):
     
     def getAction(self, obs) -> int:
         # print observation
-        print("Received game state:\n\tHand: %s\n\tPile: %s\n\tPrevious: %s\n\tTrump: %s\n\tLed: %s\n\tNeeded: %d\n\tTotal Needed: %d\n\tPlayers: %d" % (
+        print("Received game state:\n\tHand: %s\n\tPile: %s\n\tPrevious: %s\n\tPrevious Sorted: %s\n\tTrump: %s\n\tLed: %s\n\tNeeded: %d\n\tTotal Needed: %d\n\tPlayers: %d" % (
               ' '.join(self.env.deck.toString(self.env.deck.reorderGroup(obs["observation"]["hand"], obs["observation"]["trump"], obs["observation"]["led"]))),
               ' '.join(self.env.deck.toString(obs["observation"]["pile"])),
+              ' '.join(self.env.deck.toString(obs["observation"]["previous"])),
               ' '.join(self.env.deck.toString(self.env.deck.reorderGroup(obs["observation"]["previous"], obs["observation"]["trump"], obs["observation"]["led"]))),
               ' '.join(self.env.deck.toSuitString(obs["observation"]["trump"])),
               ' '.join(self.env.deck.toSuitString(obs["observation"]["led"])),
@@ -24,7 +25,7 @@ class HumanAgent(Agent):
 
         if self.env.playPhase == Phase.TRUMP: # choose trump suit
             # print suits for user
-            suitNames = [self.env.deck.toSuitString([Suit.DIAMONDS, Suit.SPADES, Suit.HEARTS, Suit.CLUBS])]
+            suitNames = [self.env.deck.toSuitString(s) for s in [Suit.DIAMONDS, Suit.SPADES, Suit.HEARTS, Suit.CLUBS]]
             # until we have good response
             while True:
                 userInput = input("Input suit from %s : " % ' '.join(suitNames))

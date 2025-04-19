@@ -81,7 +81,7 @@ def plotCurves(arr_list,
 
     # write to file if desired
     if filename is not None:
-        plt.savefig(filename)
+        plt.savefig(filename,bbox_inches='tight')
 
     # show if desired
     if show:
@@ -97,8 +97,9 @@ def plotCurvesAutolabel(arr_list, **kwargs):
 
 # plot scores vs. round for each agent
 def plotAgentScores(scores, **kwargs):
-    numPlayers = len(scores)
-    roundNumbers = range(1, 60 // numPlayers + 1)
+    numPlayers = scores.shape[0]
+    numRounds = scores.shape[2]
+    roundNumbers = range(1, numRounds + 1)
     expectedScores = [20 + 10 * (round / (0.0 + numPlayers)) for round in roundNumbers]
     plotCurvesAutolabel(scores, x_values=roundNumbers, xlabel='Round', ylabel='Score', upper_bound=expectedScores, upper_bound_label='Nominal', plot_smooth_means=False, **kwargs)
 
@@ -160,7 +161,7 @@ def plotCurvesSequence(arr_list,
 
     # write to file if desired
     if filename is not None:
-        plt.savefig(filename)
+        plt.savefig(filename,bbox_inches='tight')
 
     # show if desired
     if show:

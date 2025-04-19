@@ -19,6 +19,14 @@
             "program": "./code/trainAgentFromParams.py",
             "console": "integratedTerminal",
             "args": "./runs/test/settings.json"
+        },
+        {
+            "name": "Python Debugger: record human game",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "./code/recordHumanGameAgainstAgentFromParams.py",
+            "console": "integratedTerminal",
+            "args": "./runs/hybrid_2x15_2x5x5_2x16_2x64_pooled/ hybrid_standard_human.json"
         }
     ]
 }

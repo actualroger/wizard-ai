@@ -1,0 +1,11 @@
+standard: hybrid_2x15_2x5x5_2x16_2x64_pooled
+
+unpooled: hybrid_2x15_2x5x5_2x16_2x64_unpooled
+
+DDQN: DDQN_hybrid_2x15_2x5x5_2x16_2x64_pooled
+
+action priority: hybrid_2x15_2x5x5_2x16_2x64_pooled_priority
+q priority: hybrid_2x15_2x5x5_2x16_2x64_pooled_q_priority
+q beta priority: hybrid_2x15_2x5x5_2x16_2x64_pooled_q_beta_priority
+
+architecture: DQN_2x64_500k_pooled
